@@ -4,7 +4,7 @@ const router = express.Router();
 
 const userController = require("../controllers/user.controller");
 
-const { protectUser } = require("../middlewares/user.middleware");
+const  userMiddleware  = require("../middlewares/user.middleware");
 
 const {
   registerValidation,
@@ -51,13 +51,13 @@ router.post(
 
 router.get(
   "/profile",
-  protectUser,
+  userMiddleware,
   userController.getProfile
 );
 
 router.patch(
   "/profile",
-  protectUser,
+  userMiddleware,
   updateProfileValidation,
   userController.updateProfile
 );

@@ -40,7 +40,7 @@ export default function Navbar() {
               <Button asChild variant="ghost" size="sm">
                 <Link to="/login">Sign in</Link>
               </Button>
-              <Button asChild size="sm">
+              <Button asChild variant="ghost" size="sm">
                 <Link to="/register">Create account</Link>
               </Button>
             </>

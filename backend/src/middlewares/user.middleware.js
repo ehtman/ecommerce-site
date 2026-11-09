@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const protectUser = (req, res, next) => {
+module.exports = (req, res, next) => {
   try {
     const token = req.cookies.token;
 
@@ -27,8 +27,4 @@ const protectUser = (req, res, next) => {
       message: "Invalid or expired authentication token",
     });
   }
-};
-
-module.exports = {
-  protectUser,
 };

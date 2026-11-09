@@ -1,0 +1,6 @@
+proper arrangement of files as respective to user accessible module level.
+
+
+ISSUES:
+mix id & slug used for getting and creating.
+category status logic need to be changed.

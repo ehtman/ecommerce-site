@@ -1,0 +1,1387 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Products | SHOPLY</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #171717;
+    --secondary: #737373;
+    --accent: #e85d3f;
+    --light: #f5f5f5;
+    --border: #e5e5e5;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    color: var(--primary);
+    background: #fff;
+}
+
+button, input, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.container {
+    max-width: 1300px;
+    margin: auto;
+    padding: 0 24px;
+}
+
+/* Announcement */
+.announcement {
+    background: #171717;
+    color: white;
+    padding: 11px;
+    text-align: center;
+    font-size: 13px;
+}
+
+/* Navbar */
+header {
+    border-bottom: 1px solid var(--border);
+}
+
+.navbar {
+    height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+}
+
+.logo {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+}
+
+.logo span {
+    color: var(--accent);
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 25px;
+    font-size: 14px;
+}
+
+.nav-links a:hover {
+    color: var(--accent);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.search {
+    width: 200px;
+    padding: 11px;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    outline: none;
+}
+
+.cart {
+    background: white;
+    font-weight: bold;
+}
+
+.cart-count {
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    padding: 3px 7px;
+    font-size: 11px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    padding: 25px 0;
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+.breadcrumb a:hover {
+    color: var(--accent);
+}
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    margin-bottom: 9px;
+}
+
+.page-header p {
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+.results {
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+/* Main Layout */
+.main-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 30px;
+    padding-bottom: 70px;
+}
+
+/* Sidebar */
+.sidebar {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    height: fit-content;
+}
+
+.sidebar-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.sidebar-heading h2 {
+    font-size: 18px;
+}
+
+.clear-btn {
+    background: none;
+    color: var(--accent);
+    font-size: 12px;
+}
+
+.filter-group {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 22px;
+    margin-bottom: 22px;
+}
+
+.filter-group:last-child {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+.filter-group h3 {
+    font-size: 15px;
+    margin-bottom: 17px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 13px;
+    color: var(--secondary);
+    font-size: 13px;
+}
+
+.filter-option input {
+    accent-color: var(--accent);
+}
+
+.price-inputs {
+    display: flex;
+    gap: 8px;
+}
+
+.price-inputs input {
+    width: 50%;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    outline: none;
+}
+
+.apply-filter {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    padding: 11px;
+    border-radius: 4px;
+    margin-top: 12px;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 22px;
+    padding: 14px 16px;
+    background: var(--light);
+    border-radius: 6px;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toolbar select {
+    padding: 10px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 4px;
+    outline: none;
+    font-size: 13px;
+}
+
+.toolbar span {
+    font-size: 13px;
+    color: var(--secondary);
+}
+
+.filter-toggle {
+    display: none;
+    background: var(--primary);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 4px;
+}
+
+/* Active Filters */
+.active-filters {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.filter-chip {
+    background: #fff0eb;
+    color: var(--accent);
+    padding: 7px 11px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Product Grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.product-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    transition: .2s;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px #00000010;
+}
+
+.product-placeholder {
+    height: 200px;
+    background: #f3f3f3;
+    border-bottom: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 13px;
+}
+
+.discount {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--accent);
+    color: white;
+    padding: 6px 8px;
+    font-size: 11px;
+    border-radius: 3px;
+}
+
+.wishlist {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 16px;
+}
+
+.product-info {
+    padding: 14px;
+}
+
+.product-brand {
+    font-size: 11px;
+    color: var(--secondary);
+    text-transform: uppercase;
+}
+
+.product-info h3 {
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 8px 0;
+}
+
+.rating {
+    font-size: 12px;
+    color: #d99b24;
+    margin-bottom: 12px;
+}
+
+.price {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.current-price {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.old-price {
+    font-size: 12px;
+    text-decoration: line-through;
+    color: #999;
+}
+
+.stock {
+    font-size: 11px;
+    color: #26965b;
+    margin-bottom: 12px;
+}
+
+.out-stock {
+    color: #d9534f;
+}
+
+.add-cart {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    padding: 11px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.add-cart:hover {
+    background: var(--accent);
+}
+
+.add-cart:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+    display: none;
+    grid-column: 1/-1;
+    padding: 70px 20px;
+    text-align: center;
+    background: var(--light);
+    border-radius: 8px;
+}
+
+.empty-state p {
+    color: var(--secondary);
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 40px;
+}
+
+.pagination button {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+}
+
+.pagination button.active,
+.pagination button:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* Footer */
+footer {
+    background: #111;
+    color: white;
+    padding: 50px 0 20px;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 30px;
+    padding-bottom: 35px;
+}
+
+.footer-column h3 {
+    margin-bottom: 17px;
+    font-size: 15px;
+}
+
+.footer-column p,
+.footer-column a {
+    display: block;
+    color: #999;
+    font-size: 13px;
+    line-height: 2.2;
+}
+
+.copyright {
+    text-align: center;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+    color: #777;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media(max-width: 1100px) {
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media(max-width: 850px) {
+    .nav-links {
+        display: none;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 650px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    .search {
+        display: none;
+    }
+
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .sidebar.show {
+        display: block;
+    }
+
+    .filter-toggle {
+        display: block;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .page-header h1 {
+        font-size: 26px;
+    }
+
+    .toolbar {
+        flex-wrap: wrap;
+    }
+
+    .product-placeholder {
+        height: 155px;
+    }
+
+    .product-info {
+        padding: 10px;
+    }
+
+    .footer-grid {
+        gap: 25px;
+    }
+}
+
+@media(max-width: 370px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="announcement">
+    Free Shipping on Orders Above Rs. 5,000
+</div>
+
+<header>
+    <div class="container navbar">
+
+        <a href="#" class="logo">SHOP<span>LY.</span></a>
+
+        <ul class="nav-links">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Categories</a></li>
+            <li><a href="#">Shop</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <input class="search" id="searchInput"
+                placeholder="Search products...">
+
+            <button class="cart">
+                🛒 Cart <span class="cart-count" id="cartCount">0</span>
+            </button>
+        </div>
+
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="breadcrumb">
+        <a href="#">Home</a>
+        <span>/</span>
+        <a href="#">Shop</a>
+        <span>/</span>
+        <span>All Products</span>
+    </div>
+
+    <!-- Page Heading -->
+    <section class="page-header">
+        <div>
+            <h1>All Products</h1>
+            <p>Explore our complete collection of products.</p>
+        </div>
+
+        <span class="results" id="resultsText">
+            Showing 1–12 of 12 products
+        </span>
+    </section>
+
+    <!-- Main Listing -->
+    <section class="main-layout">
+
+        <!-- Filters Sidebar -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar-heading">
+                <h2>Filters</h2>
+                <button class="clear-btn" id="clearFilters">Clear All</button>
+            </div>
+
+            <div class="filter-group">
+                <h3>Categories</h3>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="category-filter"
+                        value="Electronics">
+                    Electronics
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="category-filter"
+                        value="Fashion">
+                    Fashion
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="category-filter"
+                        value="Home">
+                    Home & Living
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="category-filter"
+                        value="Accessories">
+                    Accessories
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <h3>Price Range</h3>
+
+                <div class="price-inputs">
+                    <input type="number" id="minPrice"
+                        placeholder="Min" min="0">
+
+                    <input type="number" id="maxPrice"
+                        placeholder="Max" min="0">
+                </div>
+
+                <button class="apply-filter" id="applyPrice">
+                    Apply Filter
+                </button>
+            </div>
+
+            <div class="filter-group">
+                <h3>Brands</h3>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="brand-filter"
+                        value="Sony">
+                    Sony
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="brand-filter"
+                        value="Samsung">
+                    Samsung
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="brand-filter"
+                        value="Apple">
+                    Apple
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="brand-filter"
+                        value="Nike">
+                    Nike
+                </label>
+
+                <label class="filter-option">
+                    <input type="checkbox" class="brand-filter"
+                        value="JBL">
+                    JBL
+                </label>
+            </div>
+
+            <div class="filter-group">
+                <h3>Availability</h3>
+
+                <label class="filter-option">
+                    <input type="checkbox" id="inStock">
+                    In Stock Only
+                </label>
+            </div>
+
+        </aside>
+
+        <!-- Product Content -->
+        <div>
+
+            <div class="toolbar">
+
+                <div class="toolbar-left">
+                    <button class="filter-toggle" id="filterToggle">
+                        ☰ Filters
+                    </button>
+
+                    <span id="productCount">12 Products</span>
+                </div>
+
+                <select id="sortSelect">
+                    <option value="featured">Featured</option>
+                    <option value="low">Price: Low to High</option>
+                    <option value="high">Price: High to Low</option>
+                    <option value="name">Name: A to Z</option>
+                </select>
+
+            </div>
+
+            <div class="active-filters" id="activeFilters"></div>
+
+            <div class="product-grid" id="productGrid">
+
+                <!-- Product 1 -->
+                <article class="product-card"
+                    data-name="Wireless Headphones"
+                    data-price="4000"
+                    data-brand="Sony"
+                    data-category="Electronics"
+                    data-stock="true">
+
+                    <span class="discount">-20%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Sony</span>
+                        <h3>Wireless Headphones</h3>
+                        <div class="rating">★★★★★ (120)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 4,000</span>
+                            <span class="old-price">Rs. 5,000</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 2 -->
+                <article class="product-card"
+                    data-name="Smartphone Pro"
+                    data-price="45000"
+                    data-brand="Samsung"
+                    data-category="Electronics"
+                    data-stock="true">
+
+                    <span class="discount">-10%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Samsung</span>
+                        <h3>Smartphone Pro</h3>
+                        <div class="rating">★★★★★ (90)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 45,000</span>
+                            <span class="old-price">Rs. 50,000</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 3 -->
+                <article class="product-card"
+                    data-name="Smart Watch"
+                    data-price="6500"
+                    data-brand="Apple"
+                    data-category="Accessories"
+                    data-stock="true">
+
+                    <span class="discount">-15%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Apple</span>
+                        <h3>Smart Watch</h3>
+                        <div class="rating">★★★★☆ (65)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 6,500</span>
+                            <span class="old-price">Rs. 7,500</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 4 -->
+                <article class="product-card"
+                    data-name="Bluetooth Speaker"
+                    data-price="3500"
+                    data-brand="JBL"
+                    data-category="Electronics"
+                    data-stock="true">
+
+                    <span class="discount">-30%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">JBL</span>
+                        <h3>Bluetooth Speaker</h3>
+                        <div class="rating">★★★★★ (150)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 3,500</span>
+                            <span class="old-price">Rs. 5,000</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 5 -->
+                <article class="product-card"
+                    data-name="Running Shoes"
+                    data-price="5500"
+                    data-brand="Nike"
+                    data-category="Fashion"
+                    data-stock="true">
+
+                    <span class="discount">-15%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Nike</span>
+                        <h3>Running Shoes</h3>
+                        <div class="rating">★★★★★ (85)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 5,500</span>
+                            <span class="old-price">Rs. 6,500</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 6 -->
+                <article class="product-card"
+                    data-name="Gaming Mouse"
+                    data-price="2500"
+                    data-brand="Sony"
+                    data-category="Electronics"
+                    data-stock="false">
+
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Sony</span>
+                        <h3>Gaming Mouse</h3>
+                        <div class="rating">★★★★☆ (80)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 2,500</span>
+                        </div>
+                        <div class="stock out-stock">● Out of Stock</div>
+                        <button class="add-cart" disabled>Unavailable</button>
+                    </div>
+                </article>
+
+                <!-- Product 7 -->
+                <article class="product-card"
+                    data-name="Table Lamp"
+                    data-price="2200"
+                    data-brand="Samsung"
+                    data-category="Home"
+                    data-stock="true">
+
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Samsung</span>
+                        <h3>Modern Table Lamp</h3>
+                        <div class="rating">★★★★☆ (40)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 2,200</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 8 -->
+                <article class="product-card"
+                    data-name="Wireless Earbuds"
+                    data-price="5500"
+                    data-brand="Sony"
+                    data-category="Electronics"
+                    data-stock="true">
+
+                    <span class="discount">-15%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Sony</span>
+                        <h3>Wireless Earbuds</h3>
+                        <div class="rating">★★★★★ (200)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 5,500</span>
+                            <span class="old-price">Rs. 6,500</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 9 -->
+                <article class="product-card"
+                    data-name="Casual T Shirt"
+                    data-price="1800"
+                    data-brand="Nike"
+                    data-category="Fashion"
+                    data-stock="true">
+
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Nike</span>
+                        <h3>Casual T-Shirt</h3>
+                        <div class="rating">★★★★☆ (35)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 1,800</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 10 -->
+                <article class="product-card"
+                    data-name="Portable Charger"
+                    data-price="2200"
+                    data-brand="Samsung"
+                    data-category="Electronics"
+                    data-stock="true">
+
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Samsung</span>
+                        <h3>Portable Charger</h3>
+                        <div class="rating">★★★★☆ (55)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 2,200</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 11 -->
+                <article class="product-card"
+                    data-name="Desk Organizer"
+                    data-price="1200"
+                    data-brand="Apple"
+                    data-category="Home"
+                    data-stock="true">
+
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Apple</span>
+                        <h3>Desk Organizer</h3>
+                        <div class="rating">★★★★☆ (25)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 1,200</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <!-- Product 12 -->
+                <article class="product-card"
+                    data-name="Premium Backpack"
+                    data-price="3800"
+                    data-brand="Nike"
+                    data-category="Accessories"
+                    data-stock="true">
+
+                    <span class="discount">-20%</span>
+                    <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    <div class="product-placeholder">Product Image</div>
+
+                    <div class="product-info">
+                        <span class="product-brand">Nike</span>
+                        <h3>Premium Backpack</h3>
+                        <div class="rating">★★★★★ (110)</div>
+                        <div class="price">
+                            <span class="current-price">Rs. 3,800</span>
+                            <span class="old-price">Rs. 4,750</span>
+                        </div>
+                        <div class="stock">● In Stock</div>
+                        <button class="add-cart">Add to Cart</button>
+                    </div>
+                </article>
+
+                <div class="empty-state" id="emptyState">
+                    <h3>No Products Found</h3>
+                    <p>Try adjusting your search or filters.</p>
+                </div>
+
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination"></div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <div class="container">
+
+        <div class="footer-grid">
+
+            <div class="footer-column">
+                <a href="#" class="logo">SHOP<span>LY.</span></a>
+                <p style="margin-top:15px">
+                    Your one-stop destination for quality products.
+                </p>
+            </div>
+
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <a href="#">Home</a>
+                <a href="#">Shop</a>
+                <a href="#">Categories</a>
+            </div>
+
+            <div class="footer-column">
+                <h3>Customer Service</h3>
+                <a href="#">Contact</a>
+                <a href="#">Shipping</a>
+                <a href="#">Returns</a>
+            </div>
+
+            <div class="footer-column">
+                <h3>Contact</h3>
+                <p>support@shoply.com</p>
+                <p>+92 300 1234567</p>
+                <p>Pakistan</p>
+            </div>
+
+        </div>
+
+        <div class="copyright">
+            © 2026 SHOPLY. All rights reserved.
+        </div>
+
+    </div>
+</footer>
+
+<script>
+
+// DOM Elements
+const grid = document.getElementById("productGrid");
+const allProducts = [...document.querySelectorAll(".product-card")];
+const searchInput = document.getElementById("searchInput");
+const sortSelect = document.getElementById("sortSelect");
+const pagination = document.getElementById("pagination");
+
+const PAGE_SIZE = 8;
+let currentPage = 1;
+let cartCount = 0;
+
+
+// Filtering and Pagination
+function getFilteredProducts() {
+
+    const search = searchInput.value.toLowerCase();
+
+    const min = Number(document.getElementById("minPrice").value) || 0;
+    const maxValue = document.getElementById("maxPrice").value;
+    const max = maxValue === "" ? Infinity : Number(maxValue);
+
+    const brands = [...document.querySelectorAll(".brand-filter:checked")]
+        .map(item => item.value);
+
+    const categories = [...document.querySelectorAll(".category-filter:checked")]
+        .map(item => item.value);
+
+    const stockOnly = document.getElementById("inStock").checked;
+
+    return allProducts.filter(product => {
+
+        const name = product.dataset.name.toLowerCase();
+        const price = Number(product.dataset.price);
+        const brand = product.dataset.brand;
+        const category = product.dataset.category;
+        const stock = product.dataset.stock === "true";
+
+        return name.includes(search) &&
+            price >= min &&
+            price <= max &&
+            (brands.length === 0 || brands.includes(brand)) &&
+            (categories.length === 0 || categories.includes(category)) &&
+            (!stockOnly || stock);
+
+    });
+}
+
+
+// Sorting
+function sortProducts(products) {
+
+    const sorted = [...products];
+
+    switch(sortSelect.value) {
+
+        case "low":
+            sorted.sort((a,b) =>
+                Number(a.dataset.price) - Number(b.dataset.price)
+            );
+            break;
+
+        case "high":
+            sorted.sort((a,b) =>
+                Number(b.dataset.price) - Number(a.dataset.price)
+            );
+            break;
+
+        case "name":
+            sorted.sort((a,b) =>
+                a.dataset.name.localeCompare(b.dataset.name)
+            );
+            break;
+
+    }
+
+    return sorted;
+}
+
+
+// Render Products
+function renderProducts() {
+
+    const filtered = sortProducts(getFilteredProducts());
+
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const visible = filtered.slice(start, start + PAGE_SIZE);
+
+    allProducts.forEach(product => {
+        product.style.display = "none";
+    });
+
+    visible.forEach(product => {
+        product.style.display = "";
+        grid.insertBefore(product, document.getElementById("emptyState"));
+    });
+
+    document.getElementById("emptyState").style.display =
+        total === 0 ? "block" : "none";
+
+    document.getElementById("productCount").textContent =
+        `${total} Products`;
+
+    document.getElementById("resultsText").textContent =
+        total === 0
+            ? "No products found"
+            : `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total} products`;
+
+    renderPagination(totalPages);
+    renderActiveFilters();
+
+}
+
+
+// Pagination
+function renderPagination(totalPages) {
+
+    pagination.innerHTML = "";
+
+    if (totalPages <= 1) return;
+
+    function addButton(label, page, active = false, disabled = false) {
+
+        const button = document.createElement("button");
+
+        button.textContent = label;
+        button.className = active ? "active" : "";
+        button.disabled = disabled;
+
+        button.addEventListener("click", () => {
+            currentPage = page;
+            renderProducts();
+            window.scrollTo({top: 0, behavior: "smooth"});
+        });
+
+        pagination.appendChild(button);
+    }
+
+    addButton("‹", Math.max(1, currentPage - 1), false,
+        currentPage === 1);
+
+    for (let i = 1; i <= totalPages; i++) {
+        addButton(i, i, currentPage === i);
+    }
+
+    addButton("›", Math.min(totalPages, currentPage + 1), false,
+        currentPage === totalPages);
+
+}
+
+
+// Active Filter Labels
+function renderActiveFilters() {
+
+    const container = document.getElementById("activeFilters");
+
+    container.innerHTML = "";
+
+    document.querySelectorAll(
+        ".brand-filter:checked, .category-filter:checked"
+    ).forEach(filter => {
+
+        const chip = document.createElement("span");
+
+        chip.className = "filter-chip";
+        chip.textContent = filter.value + " ×";
+
+        container.appendChild(chip);
+
+    });
+
+}
+
+
+// Filter Events
+searchInput.addEventListener("input", () => {
+    currentPage = 1;
+    renderProducts();
+});
+
+document.getElementById("applyPrice").addEventListener("click", () => {
+    const min = document.getElementById("minPrice").value;
+    const max = document.getElementById("maxPrice").value;
+
+    if ((min !== "" && Number(min) < 0) ||
+        (max !== "" && Number(max) < 0) ||
+        (min !== "" && max !== "" && Number(min) > Number(max))) {
+        alert("Please enter a valid price range.");
+        return;
+    }
+
+    currentPage = 1;
+    renderProducts();
+});
+
+document.querySelectorAll(
+    ".brand-filter, .category-filter, #inStock"
+).forEach(filter => {
+
+    filter.addEventListener("change", () => {
+        currentPage = 1;
+        renderProducts();
+    });
+
+});
+
+sortSelect.addEventListener("change", () => {
+    currentPage = 1;
+    renderProducts();
+});
+
+
+// Clear Filters
+document.getElementById("clearFilters").addEventListener("click", () => {
+
+    searchInput.value = "";
+
+    document.getElementById("minPrice").value = "";
+    document.getElementById("maxPrice").value = "";
+    document.getElementById("inStock").checked = false;
+
+    document.querySelectorAll(
+        ".brand-filter, .category-filter"
+    ).forEach(filter => filter.checked = false);
+
+    sortSelect.value = "featured";
+
+    currentPage = 1;
+    renderProducts();
+
+});
+
+
+// Cart
+document.querySelectorAll(".add-cart").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        cartCount++;
+
+        document.getElementById("cartCount").textContent = cartCount;
+
+        button.textContent = "Added ✓";
+
+        setTimeout(() => {
+            button.textContent = "Add to Cart";
+        }, 1000);
+
+    });
+
+});
+
+
+// Wishlist
+document.querySelectorAll(".wishlist").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        button.textContent =
+            button.textContent === "♡" ? "♥" : "♡";
+
+        button.style.color =
+            button.textContent === "♥" ? "#e85d3f" : "#171717";
+
+    });
+
+});
+
+
+// Mobile Filters
+document.getElementById("filterToggle").addEventListener("click", () => {
+
+    document.getElementById("sidebar").classList.toggle("show");
+
+});
+
+
+// Initial Rendering
+renderProducts();
+
+</script>
+
+</body>
+</html>

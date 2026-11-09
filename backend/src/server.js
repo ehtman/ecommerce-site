@@ -15,6 +15,10 @@ const userRoutes = require("./routes/user.route");
 
 const app = express();
 
+const productRoutes = require("./routes/product.route");
+const categoryRoutes = require("./routes/category.route");
+
+
 // Security middleware
 app.use(helmet());
 
@@ -41,8 +45,12 @@ app.get("/", (req, res) => {
   });
 });
 
+
 // API routes
 app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
+
 
 // 404 handler
 app.use((req, res) => {

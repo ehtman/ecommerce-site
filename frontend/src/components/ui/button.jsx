@@ -7,6 +7,7 @@ const variants = {
   ghost: "text-slate-700 hover:bg-slate-100",
   destructive: "bg-red-600 text-white hover:bg-red-700",
   link: "text-slate-900 underline-offset-4 hover:underline",
+  neon: "bg-black-700 text-white hover:bg-black-900",
 };
 
 const sizes = {

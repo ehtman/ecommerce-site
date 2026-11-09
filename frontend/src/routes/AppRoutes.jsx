@@ -8,6 +8,12 @@ import Profile from "@/pages/profile/Profile";
 import EditProfile from "@/pages/profile/EditProfile";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import GuestRoute from "@/components/auth/GuestRoute";
+import Shop from "@/pages/Shop";
+import ProductDetails from "@/pages/ProductDetails";
+
+
+
+
 
 export default function AppRoutes() {
   return (
@@ -24,6 +30,8 @@ export default function AppRoutes() {
         <Route path="/profile/edit" element={<EditProfile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/shop" element={<Shop />} />
+      <Route path="/product/:slug" element={<ProductDetails />} />
     </Routes>
   );
 }
