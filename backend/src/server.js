@@ -17,6 +17,7 @@ const app = express();
 
 const productRoutes = require("./routes/product.route");
 const categoryRoutes = require("./routes/category.route");
+const categoryAdminRoutes = require("./routes/category.admin.route");
 
 
 // Security middleware
@@ -50,6 +51,8 @@ app.get("/", (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/admin/categories", categoryAdminRoutes);
+
 
 
 // 404 handler
