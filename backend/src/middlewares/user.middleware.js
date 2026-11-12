@@ -1,17 +1,13 @@
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
 module.exports = async (req, res, next) => {
   try {
-    // Support both HTTP-only cookies and Bearer tokens.
     const authHeader = req.headers.authorization;
 
     const token =
       req.cookies?.token ||
-      (authHeader?.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : null);
+      (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null);
 
     if (!token) {
       return res.status(401).json({
@@ -20,35 +16,28 @@ module.exports = async (req, res, next) => {
       });
     }
 
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET is not configured");
-    }
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select(
-      "_id name email role isActive"
+      "_id name email role isActive",
     );
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "User account not found.",
+        message: "User not found.",
       });
     }
 
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been deactivated.",
+        message: "Account is deactivated.",
       });
     }
 
     req.user = {
-      id: user._id.toString(),
+      id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -56,8 +45,10 @@ module.exports = async (req, res, next) => {
 
     next();
   } catch (error) {
-    if (error.name === "TokenExpiredError" ||
-        error.name === "JsonWebTokenError") {
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid or expired authentication token.",

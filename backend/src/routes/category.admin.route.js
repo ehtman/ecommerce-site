@@ -8,9 +8,11 @@ const adminCategoryController = require(
   "../controllers/category.controller"
 );
 
+const userMiddleware = require("../middlewares/user.middleware");
+const adminMiddleware = require("../middlewares/admin.middleware");
 
-const adminMiddleware = require("../middlewares/admin.middleware"); // will add later while confirming admin modules specifically
-
+// Authentication first, authorization second
+router.use(userMiddleware);
 router.use(adminMiddleware);
 
 // CREATE CATEGORY

@@ -1,4 +1,3 @@
-
 const User = require("../models/user.model");
 
 const bcrypt = require("bcryptjs");
@@ -25,13 +24,9 @@ const generateToken = (userId) => {
     throw createError("JWT configuration is missing", 500);
   }
 
-  return jwt.sign(
-    { id: userId },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-    }
-  );
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  });
 };
 
 // ==========================================
@@ -120,18 +115,16 @@ const loginUser = async ({ email, password }) => {
     email: normalizedEmail,
   }).select("+password");
 
-  if (!user) {
-    throw createError("Invalid email or password", 401);
+  if (!user || !user.isActive) {
+    throw createError("User might be un-registered or inactive", 401);
   }
 
-  const isPasswordValid = await bcrypt.compare(
-    password,
-    user.password
-  );
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
     throw createError("Invalid email or password", 401);
   }
+
 
   const token = generateToken(user._id);
 
@@ -244,10 +237,7 @@ const resetPassword = async (token, password) => {
     throw createError("Reset token is required", 400);
   }
 
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
@@ -279,7 +269,7 @@ const resetPassword = async (token, password) => {
 
 const getProfile = async (userId) => {
   const user = await User.findById(userId).select(
-    "-password -resetPasswordToken -resetPasswordExpires"
+    "-password -resetPasswordToken -resetPasswordExpires",
   );
 
   if (!user) {
@@ -317,10 +307,8 @@ const updateProfile = async (userId, updateData) => {
     {
       new: true,
       runValidators: true,
-    }
-  ).select(
-    "-password -resetPasswordToken -resetPasswordExpires"
-  );
+    },
+  ).select("-password -resetPasswordToken -resetPasswordExpires");
 
   if (!user) {
     throw createError("User not found", 404);

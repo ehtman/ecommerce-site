@@ -7,3 +7,9 @@ category status logic need to be changed.
 
 isActive Conditional handling in category and products
 
+Option B — Dynamic RBAC
+- Roles stored in MongoDB.
+- Permissions stored in MongoDB.
+- Admin can create custom roles.
+- Admin can assign permissions dynamically.
+- Staff accounts reference roles.
