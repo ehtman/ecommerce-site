@@ -1,0 +1,12 @@
+
+import User from "./user.model.js";
+
+export const getUserProfile = async (userId) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
