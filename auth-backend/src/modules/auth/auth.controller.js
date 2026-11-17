@@ -1,150 +1,55 @@
+import asyncHandler from '../../utils/asyncHandler.js';
+import { sendSuccess } from '../../utils/ApiResponse.js';
+import generateToken from '../../utils/generateToken.js';
+import * as authService from './auth.service.js';
 
-import * as authService from "./auth.service.js";
+const withToken = (user) => ({ token: generateToken(user), user });
 
-import {
-  accessCookieOptions,
-  refreshCookieOptions,
-} from "../../utils/cookie-options.js";
+export const register = asyncHandler(async (req, res) => {
+  const user = await authService.registerUser(req.body);
+  sendSuccess(res, 201, 'Registration successful. Please check your email to verify your account.', withToken(user));
+});
 
-// REGISTER
-export const register = async (req, res, next) => {
-  try {
-    const { name, email, password } = req.body;
+export const login = asyncHandler(async (req, res) => {
+  const user = await authService.loginUser(req.body.email, req.body.password);
+  sendSuccess(res, 200, 'Login successful', withToken(user));
+});
 
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, email and password are required",
-      });
-    }
+export const adminLogin = asyncHandler(async (req, res) => {
+  const user = await authService.loginUser(req.body.email, req.body.password, { requireAdmin: true });
+  sendSuccess(res, 200, 'Login successful', withToken(user));
+});
 
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 8 characters",
-      });
-    }
+export const googleLogin = asyncHandler(async (req, res) => {
+  const user = await authService.googleLogin(req.body.credential);
+  sendSuccess(res, 200, 'Login successful', withToken(user));
+});
 
-    const user = await authService.registerUser({
-      name,
-      email: email.trim().toLowerCase(),
-      password,
-    });
+// JWTs are stateless: the client simply deletes its token.
+export const logout = asyncHandler(async (_req, res) => {
+  sendSuccess(res, 200, 'Logged out');
+});
 
-    res.status(201).json({
-      success: true,
-      message: "Registration successful",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+export const me = asyncHandler(async (req, res) => {
+  sendSuccess(res, 200, 'Current user', req.user);
+});
 
-// LOGIN
-export const login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const user = await authService.verifyEmail(req.body.token);
+  sendSuccess(res, 200, 'Email verified successfully', user);
+});
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
-    }
+export const resendVerification = asyncHandler(async (req, res) => {
+  await authService.resendVerification(req.user._id);
+  sendSuccess(res, 200, 'Verification email sent');
+});
 
-    const result = await authService.loginUser({
-      email: email.trim().toLowerCase(),
-      password,
-    });
+export const forgotPassword = asyncHandler(async (req, res) => {
+  await authService.forgotPassword(req.body.email);
+  sendSuccess(res, 200, 'If an account exists for this email, a reset link has been sent');
+});
 
-    res.cookie(
-      "accessToken",
-      result.accessToken,
-      accessCookieOptions
-    );
-
-    res.cookie(
-      "refreshToken",
-      result.refreshToken,
-      refreshCookieOptions
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      user: {
-        id: result.user._id,
-        name: result.user.name,
-        email: result.user.email,
-        role: result.user.role,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// REFRESH TOKEN
-export const refresh = async (req, res, next) => {
-  try {
-    const token = req.cookies.refreshToken;
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Refresh token required",
-      });
-    }
-
-    const result = await authService.refreshUserToken(token);
-
-    res.cookie(
-      "accessToken",
-      result.accessToken,
-      accessCookieOptions
-    );
-
-    res.cookie(
-      "refreshToken",
-      result.refreshToken,
-      refreshCookieOptions
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Tokens refreshed successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// LOGOUT
-export const logout = async (req, res, next) => {
-  try {
-    await authService.logoutUser(req.user._id);
-
-    res.clearCookie("accessToken", {
-      ...accessCookieOptions,
-      maxAge: undefined,
-    });
-
-    res.clearCookie("refreshToken", {
-      ...refreshCookieOptions,
-      maxAge: undefined,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Logout successful",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+export const resetPassword = asyncHandler(async (req, res) => {
+  await authService.resetPassword(req.body.token, req.body.password);
+  sendSuccess(res, 200, 'Password reset successful. Please log in with your new password.');
+});

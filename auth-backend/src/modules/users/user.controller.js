@@ -1,23 +1,10 @@
+import asyncHandler from '../../utils/asyncHandler.js';
+import { sendSuccess } from '../../utils/ApiResponse.js';
+import generateToken from '../../utils/generateToken.js';
+import * as userService from './user.service.js';
 
-import { getUserProfile } from "./user.service.js";
-
-export const getProfile = async (req, res, next) => {
-  try {
-    const user = await getUserProfile(req.user._id);
-
-    res.status(200).json({
-      success: true,
-      message: "Profile retrieved successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isActive: user.isActive,
-        createdAt: user.createdAt,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+export const changePassword = asyncHandler(async (req, res) => {
+  const user = await userService.changePassword(req.user._id, req.body.currentPassword, req.body.newPassword);
+  // Old tokens stop working, so we return a fresh one
+  sendSuccess(res, 200, 'Password updated', { token: generateToken(user) });
+});

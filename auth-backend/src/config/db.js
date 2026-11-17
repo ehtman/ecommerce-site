@@ -1,17 +1,21 @@
+// server/src/config/db.js
+import mongoose from 'mongoose';
+import env from './env.js';
 
-import mongoose from "mongoose";
+mongoose.set('strictQuery', true);           // ignore unknown filter fields
 
-const connectDB = async () => {
-  try {
-    const connection = await mongoose.connect(process.env.MONGODB_URI);
+let cached = global._mongo;
+if (!cached) cached = global._mongo = { conn: null, promise: null };
 
-    console.log(
-      `MongoDB Connected: ${connection.connection.host}`
-    );
-  } catch (error) {
-    console.error("MongoDB Connection Error:", error.message);
-    process.exit(1);
+export async function connectDB() {
+  if (cached.conn) return cached.conn;
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(env.MONGO_URI, {
+      maxPoolSize: 5,
+      bufferCommands: false,
+      autoIndex: env.NODE_ENV !== 'production',   // build indexes by script in prod
+    });
   }
-};
-
-export default connectDB;
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
