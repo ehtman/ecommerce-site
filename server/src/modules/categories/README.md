@@ -1,0 +1,15 @@
+# src/modules/categories/: the shop's product categories
+
+Mounted at **`/api/categories`**. Reads are **public** (no token). Writes need `protect` + `authorize('admin')`. Customers get 403.
+
+| File                     | What it does                                                                                                                                                                                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `category.model.js`      | The `Category` schema (name, generated slug, description, parent, image, isActive, sortOrder), `children` virtual, `pre('validate')` slug hook. Indexes: unique case-insensitive `name`, unique `slug`, `{parent, sortOrder}`. Exports `CASE_INSENSITIVE`.                                |
+| `category.validation.js` | `createCategoryRules` (name required) and `updateCategoryRules` (all optional): lengths, Mongo id `parent`, Cloudinary `image`, boolean `isActive`, `sortOrder` 0–1000.                                                                                                                   |
+| `category.service.js`    | `listActive`, `getBySlug` (active only, else 404), `createCategory`, `updateCategory`, `deleteCategory` (refused while it has sub-categories). Private `assertNameFree` (409) and `checkParent` (two levels). `// Branch 04:` notes mark the product and Cloudinary checks still to come. |
+| `category.controller.js` | Thin handlers: `list`, `getBySlug`, `create` (201), `update`, `remove`.                                                                                                                                                                                                                   |
+| `category.routes.js`     | `GET /`, `GET /:slug` (public); `POST /`, `PUT /:id`, `DELETE /:id` (admin, with `validateObjectId('id')` and `validate(...)`).                                                                                                                                                           |
+| `category.docs.js`       | OpenAPI for `/categories/*` (tag **Categories**).                                                                                                                                                                                                                                         |
+
+Full guide: [docs/modules/03-categories.md](../../../../docs/modules/03-categories.md) · Mind map: [docs/mind-maps/03-categories.md](../../../../docs/mind-maps/03-categories.md) · Concept: [15 – Slugs and public vs admin APIs](../../../../docs/concepts/15-slugs-and-public-vs-admin-apis.md)
+Tests: `tests/integration/categories.test.js`, `tests/unit/category.model.test.js`, `tests/unit/slugify.test.js`

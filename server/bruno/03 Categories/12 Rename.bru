@@ -1,0 +1,32 @@
+meta {
+  name: Rename (admin) → new slug
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/categories/{{categoryId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "{{categoryName}} Renamed"
+  }
+}
+
+script:pre-request {
+  // Remember the old slug: after a rename it must stop working
+  bru.setEnvVar("oldCategorySlug", bru.getEnvVar("categorySlug"));
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("slug follows the name", function () { expect(res.body.data.slug).to.equal(bru.getEnvVar("oldCategorySlug") + "-renamed"); });
+  bru.setEnvVar("categorySlug", res.body.data.slug);
+}

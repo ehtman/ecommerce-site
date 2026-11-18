@@ -1,0 +1,41 @@
+meta {
+  name: Create category (admin) → 201 + slug
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "{{categoryName}}",
+    "description": "Created by Bruno",
+    "sortOrder": 5
+  }
+}
+
+script:pre-request {
+  // A unique name per run, so the collection can run again and again
+  bru.setEnvVar("categoryName", "Bruno Cat " + Date.now());
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("slug is generated from the name", function () {
+    expect(res.body.data.slug).to.equal(bru.getEnvVar("categoryName").toLowerCase().replace(/ /g, "-"));
+  });
+  test("top-level and active", function () {
+    expect(res.body.data.parent).to.equal(null);
+    expect(res.body.data.isActive).to.equal(true);
+  });
+  bru.setEnvVar("categoryId", res.body.data._id);
+  bru.setEnvVar("categorySlug", res.body.data.slug);
+}

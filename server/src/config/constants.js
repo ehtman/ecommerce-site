@@ -28,6 +28,13 @@ export const REGEX = Object.freeze({
   PK_PHONE: /^03\d{9}$/,
   // Pakistani postal codes are exactly 5 digits, e.g. 54000 (Lahore).
   POSTAL_CODE: /^\d{5}$/,
+  // A URL-friendly name ("slug"): lowercase letters and digits in groups joined by single
+  // dashes, e.g. "mens-shoes". No spaces, no leading/trailing or double dashes.
+  // See docs/concepts/15-slugs-and-public-vs-admin-apis.md.
+  SLUG: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+  // Images must live on OUR Cloudinary account's CDN (https only). Branch 04 adds the real
+  // upload endpoint; until then an admin stores an already-uploaded { url, publicId }.
+  CLOUDINARY_URL: /^https:\/\/res\.cloudinary\.com\//,
 });
 
 // The provinces/territories a delivery address may be in. A fixed list (an "enum")

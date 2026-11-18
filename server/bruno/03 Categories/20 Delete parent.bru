@@ -1,0 +1,19 @@
+meta {
+  name: Delete parent (admin)
+  type: http
+  seq: 20
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{categoryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}
