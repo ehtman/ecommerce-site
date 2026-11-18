@@ -1,0 +1,36 @@
+meta {
+  name: Update profile
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/users/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "name": "Ali Khan",
+    "phone": "03001234567",
+    "role": "admin",
+    "email": "hacker@example.com"
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("name and phone changed", function () {
+    expect(res.body.data.name).to.equal("Ali Khan");
+    expect(res.body.data.phone).to.equal("03001234567");
+  });
+  test("role and email ignored (mass assignment)", function () {
+    expect(res.body.data.role).to.equal("customer");
+    expect(res.body.data.email).to.equal(bru.getEnvVar("customerEmail"));
+  });
+}

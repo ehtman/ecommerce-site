@@ -1,1 +1,24 @@
+# Installed packages: recreated by `npm install`, never committed
 node_modules/
+
+# Environment variables
+# Real secrets live in .env files. Only the .env.example files are committed.
+.env.local
+.env
+.env.*
+!.env.example
+
+# Google OAuth credentials
+server/client_secret_*.json
+
+# Generated reports
+coverage/
+newman/
+dist/
+# Logs and OS/editor junk
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+

@@ -1,0 +1,34 @@
+meta {
+  name: Create second address as default
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Work",
+    "fullName": "Bruno Customer",
+    "phone": "03001234567",
+    "addressLine1": "Office 5, Shahrah-e-Faisal",
+    "city": "Karachi",
+    "province": "Sindh",
+    "postalCode": "75400",
+    "isDefault": true
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("the new one is now the default", function () { expect(res.body.data.isDefault).to.equal(true); });
+  bru.setEnvVar("addressId2", res.body.data._id);
+}

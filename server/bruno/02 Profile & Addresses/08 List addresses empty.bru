@@ -1,0 +1,20 @@
+meta {
+  name: List addresses empty
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/addresses
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("no addresses yet", function () { expect(res.body.data).to.have.length(0); });
+}

@@ -1,0 +1,35 @@
+meta {
+  name: Create invalid address
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Home",
+    "fullName": "Bruno Customer",
+    "phone": "12345",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Lahore",
+    "province": "Texas",
+    "postalCode": "5400"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("lists the bad fields", function () {
+    const fields = res.body.errors.map(function (e) { return e.field; });
+    expect(fields).to.include.members(["phone", "province", "postalCode"]);
+  });
+}

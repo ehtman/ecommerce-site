@@ -1,0 +1,31 @@
+meta {
+  name: Create fourth address
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Home",
+    "fullName": "Bruno Customer",
+    "phone": "03001234567",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Rawalpindi",
+    "province": "Punjab",
+    "postalCode": "46000"
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Get profile
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/users/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("is my profile", function () { expect(res.body.data.email).to.equal(bru.getEnvVar("customerEmail")); });
+}

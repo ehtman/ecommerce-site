@@ -1,0 +1,30 @@
+# .github/workflows/ci.yml – Continuous Integration (CI).
+#
+# Once this repo is on GitHub, EVERY push and pull request runs these steps on a clean
+# machine. If lint or tests fail, GitHub shows a red ❌, so broken code is caught before
+# anyone merges it. Nothing here runs locally; it is dormant until you push to GitHub.
+name: CI
+
+on:
+  push:
+    branches: ['**'] # every branch (each learning step is a branch)
+  pull_request:
+
+jobs:
+  server:
+    name: Server – lint & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server # all commands run inside server/
+    steps:
+      - uses: actions/checkout@v4 # download the code
+      - uses: actions/setup-node@v4 # install Node.js
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci # clean install exactly what package-lock.json says
+      - run: npm run lint # code quality
+      - run: npm run format:check # formatting
+      - run: npm run test:coverage # unit + integration tests with the coverage gate

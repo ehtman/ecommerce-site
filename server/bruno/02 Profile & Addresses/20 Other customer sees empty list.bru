@@ -1,0 +1,20 @@
+meta {
+  name: Other customer sees empty list
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrl}}/addresses
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{otherToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("cannot see the first customer's addresses", function () { expect(res.body.data).to.have.length(0); });
+}
