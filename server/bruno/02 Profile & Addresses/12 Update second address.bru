@@ -1,0 +1,34 @@
+meta {
+  name: Update second address
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/addresses/{{addressId2}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Work",
+    "fullName": "Bruno Customer",
+    "phone": "03001234567",
+    "addressLine1": "Office 5, Shahrah-e-Faisal",
+    "city": "Hyderabad",
+    "province": "Sindh",
+    "postalCode": "71000",
+    "isDefault": false
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("city changed", function () { expect(res.body.data.city).to.equal("Hyderabad"); });
+  test("still not the default", function () { expect(res.body.data.isDefault).to.equal(false); });
+}

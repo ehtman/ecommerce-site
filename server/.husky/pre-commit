@@ -1,0 +1,7 @@
+# Husky pre-commit hook: runs automatically before every `git commit`.
+# If anything fails, the commit is cancelled, so broken code never gets saved.
+cd server
+# 1) Lint + format only the files you staged (fast)
+npx lint-staged
+# 2) Run the whole test suite (unit + integration, in-memory DB)
+npm test --silent

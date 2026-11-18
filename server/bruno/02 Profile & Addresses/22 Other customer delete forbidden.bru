@@ -1,0 +1,19 @@
+meta {
+  name: Other customer deletes my address → 404
+  type: http
+  seq: 22
+}
+
+delete {
+  url: {{baseUrl}}/addresses/{{addressId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{otherToken}}
+}
+
+tests {
+  test("status is 404", function () { expect(res.status).to.equal(404); });
+}

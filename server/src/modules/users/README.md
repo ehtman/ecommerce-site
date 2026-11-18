@@ -1,0 +1,16 @@
+# src/modules/users/: the User model and the user's own account
+
+Mounted at **`/api/users`** (all routes need `protect`).
+
+| File                 | What it does                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user.model.js`      | The `User` schema: fields (incl. optional `phone`, `03XXXXXXXXX`), indexes, `pre('save')` (bcrypt hash + `tokenVersion` bump on change), `pre('validate')` (Google ⇒ verified), methods `comparePassword`, `isTokenOutdated`, `createEmailVerifyToken`, `createPasswordResetToken`, statics `findByEmailToken`, `findByResetToken`, plus the `toJSON` plugin. |
+| `user.validation.js` | `updateProfileRules` (optional `name` 2–50, optional `phone`), `changePasswordRules` (reuses `passwordRule('newPassword')`).                                                                                                                                                                                                                                  |
+| `user.service.js`    | `updateProfile`: copies ONLY `name` and `phone` (mass assignment protection; `""`/`null` clears the phone). `changePassword`: refuses Google-only accounts, checks the current password, refuses an identical new one, saves, emails a notice.                                                                                                                |
+| `user.controller.js` | `getProfile`, `updateProfile`, `changePassword` (returns a **fresh token** because old tokens are now outdated).                                                                                                                                                                                                                                              |
+| `user.routes.js`     | `GET /profile`, `PUT /profile`, `PUT /password`. No `:id`: it's always the token's user.                                                                                                                                                                                                                                                                      |
+| `user.docs.js`       | OpenAPI for `/users/*` (tag **Users**).                                                                                                                                                                                                                                                                                                                       |
+
+Guide: [docs/modules/02-profile-addresses.md](../../../../docs/modules/02-profile-addresses.md)
+
+Tests: `tests/unit/user.model.test.js`, `tests/integration/users.test.js`, `tests/integration/profile.test.js`
