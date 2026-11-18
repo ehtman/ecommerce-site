@@ -12,6 +12,7 @@ import { ADDRESS_LABELS, PROVINCES } from '../config/constants.js';
 import authDocs from '../modules/auth/auth.docs.js';
 import userDocs from '../modules/users/user.docs.js';
 import addressDocs from '../modules/addresses/address.docs.js';
+import categoryDocs from '../modules/categories/category.docs.js';
 
 const spec = {
   openapi: '3.0.3',
@@ -76,6 +77,35 @@ const spec = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      // A stored image (db/schemas/image.schema.js). Reused by products in branch 04.
+      Image: {
+        type: 'object',
+        required: ['url', 'publicId'],
+        properties: {
+          url: {
+            type: 'string',
+            example:
+              'https://res.cloudinary.com/demo/image/upload/v1/shopease/categories/shoes.jpg',
+            description: 'Must start with https://res.cloudinary.com/',
+          },
+          publicId: { type: 'string', example: 'shopease/categories/shoes' },
+        },
+      },
+      Category: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '665f1c2e9b1e8a0012345680' },
+          name: { type: 'string', example: "Men's Shoes" },
+          slug: { type: 'string', example: 'mens-shoes', description: 'Generated from the name' },
+          description: { type: 'string', example: 'Sneakers, formal shoes and sandals' },
+          parent: { type: 'string', nullable: true, description: 'null = top-level' },
+          image: { $ref: '#/components/schemas/Image' },
+          isActive: { type: 'boolean' },
+          sortOrder: { type: 'integer', example: 0 },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
       AuthResult: {
         type: 'object',
         properties: {
@@ -128,6 +158,7 @@ const spec = {
     ...authDocs.tags,
     ...userDocs.tags,
     ...addressDocs.tags,
+    ...categoryDocs.tags,
   ],
   paths: {
     '/health': {
@@ -140,6 +171,7 @@ const spec = {
     ...authDocs.paths,
     ...userDocs.paths,
     ...addressDocs.paths,
+    ...categoryDocs.paths,
   },
 };
 

@@ -18,7 +18,7 @@ try {
 }
 
 const server = app.listen(env.PORT, () => {
-  console.log(`✔ API running on http://localhost:${env.PORT}/api/health/ (${env.NODE_ENV})`);
+  console.log(`✔ API running on http://localhost:${env.PORT}/api (${env.NODE_ENV})`);
   console.log(`✔ API docs on   http://localhost:${env.PORT}/api/docs`);
 });
 

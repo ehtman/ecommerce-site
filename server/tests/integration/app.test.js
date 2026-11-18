@@ -43,6 +43,8 @@ describe('App basics', () => {
         '/addresses',
         '/addresses/{id}',
         '/addresses/{id}/default',
+        '/categories',
+        '/categories/{slugOrId}',
       ]),
     );
   });

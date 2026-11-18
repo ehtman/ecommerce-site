@@ -1,0 +1,19 @@
+meta {
+  name: Delete sub-category (admin)
+  type: http
+  seq: 19
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{childCategoryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}

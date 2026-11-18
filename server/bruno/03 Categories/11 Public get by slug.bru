@@ -1,0 +1,16 @@
+meta {
+  name: Public get by slug
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/categories/{{categorySlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("is our category", function () { expect(res.body.data._id).to.equal(bru.getEnvVar("categoryId")); });
+}

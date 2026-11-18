@@ -1,0 +1,28 @@
+meta {
+  name: Create sub-category (admin) → 201
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "{{categoryName}} Child",
+    "parent": "{{categoryId}}"
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("points to its parent", function () { expect(res.body.data.parent).to.equal(bru.getEnvVar("categoryId")); });
+  bru.setEnvVar("childCategoryId", res.body.data._id);
+}
