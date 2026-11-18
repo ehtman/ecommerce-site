@@ -1,0 +1,30 @@
+meta {
+  name: Duplicate name in another case → 409
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "{{categoryNameUpper}}"
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar("categoryNameUpper", bru.getEnvVar("categoryName").toUpperCase());
+}
+
+tests {
+  test("status is 409", function () { expect(res.status).to.equal(409); });
+  test("explains why", function () { expect(res.body.message).to.equal("A category with this name already exists"); });
+}

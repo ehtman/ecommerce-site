@@ -1,0 +1,26 @@
+meta {
+  name: Malformed id → 400
+  type: http
+  seq: 22
+}
+
+put {
+  url: {{baseUrl}}/categories/not-an-id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Whatever"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("Invalid id", function () { expect(res.body.message).to.equal("Invalid id"); });
+}

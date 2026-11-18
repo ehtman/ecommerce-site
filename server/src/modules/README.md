@@ -13,12 +13,13 @@ Every module has the same **anatomy**. Learn it once, read every module.
 
 Build order when writing a new module: **model → validation → service → controller → routes → mount in `app.js` → docs → tests**.
 
-| Path                                | Module                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------ |
-| [`auth/`](auth/README.md)           | Register, login, Google, verify email, reset password                    |
-| [`users/`](users/README.md)         | The User model + the logged-in user's account (profile, change password) |
-| [`addresses/`](addresses/README.md) | A customer's saved delivery addresses (ownership, one default, max 5)    |
-| `models.js`                         | Re-exports every model: `import { User } from '../models.js'`            |
+| Path                                  | Module                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| [`auth/`](auth/README.md)             | Register, login, Google, verify email, reset password                    |
+| [`users/`](users/README.md)           | The User model + the logged-in user's account (profile, change password) |
+| [`addresses/`](addresses/README.md)   | A customer's saved delivery addresses (ownership, one default, max 5)    |
+| [`categories/`](categories/README.md) | Product categories: public reads by slug, admin-only writes, two levels  |
+| `models.js`                           | Re-exports every model: `import { User } from '../models.js'`            |
 
 Each new branch adds a folder here, one line in `models.js` (if it has a model) and one line in `app.js`.
 

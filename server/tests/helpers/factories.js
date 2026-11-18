@@ -6,7 +6,7 @@
  */
 import request from 'supertest';
 import app from '../../src/app.js';
-import { User, Address } from '../../src/modules/models.js';
+import { User, Address, Category } from '../../src/modules/models.js';
 import generateToken from '../../src/utils/generateToken.js';
 import { outbox } from '../../src/emails/sendEmail.js';
 
@@ -61,6 +61,15 @@ export const validAddress = (overrides = {}) => ({
  */
 export const createAddress = (user, overrides = {}) =>
   Address.create({ ...validAddress(), user: user._id, ...overrides });
+
+let categoryCounter = 0;
+/**
+ * Saves a category directly in the database (the slug hook still runs).
+ * Each call gets a unique name, so tests never collide on the unique name index.
+ * Override anything: createCategory({ name: 'Shoes', parent: men._id, isActive: false }).
+ */
+export const createCategory = (overrides = {}) =>
+  Category.create({ name: `Category ${Date.now()}-${(categoryCounter += 1)}`, ...overrides });
 
 /** The supertest client for our app (no real network port needed). */
 export const api = () => request(app);

@@ -1,0 +1,19 @@
+meta {
+  name: Customer deletes → 403
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{childCategoryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+tests {
+  test("status is 403", function () { expect(res.status).to.equal(403); });
+}

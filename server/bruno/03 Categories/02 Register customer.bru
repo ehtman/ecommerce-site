@@ -1,0 +1,29 @@
+meta {
+  name: Register customer (for the 403 checks)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Category Tester",
+    "email": "{{customerEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  // A fresh customer. Register returns a token right away; no email is needed for a 403 check
+  bru.setEnvVar("customerEmail", "bruno.cat" + Date.now() + "@example.com");
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("customerToken", res.body.data.token);
+}

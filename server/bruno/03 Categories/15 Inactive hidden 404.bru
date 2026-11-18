@@ -1,0 +1,15 @@
+meta {
+  name: Inactive is hidden from the public → 404
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/categories/{{categorySlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 404", function () { expect(res.status).to.equal(404); });
+}
