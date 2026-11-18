@@ -1,0 +1,6 @@
+# Keep LF line endings in the repo and in your working folder on every OS.
+# (Prettier expects LF, and shell scripts such as the Husky hook break with CRLF.)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

@@ -1,0 +1,18 @@
+meta {
+  name: Mailpit – read reset email
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/message/latest
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  const match = (res.body.Text || '').match(/token=([a-f0-9]+)/);
+  test("email has a token link", function () { expect(match).to.not.equal(null); });
+  bru.setEnvVar("resetToken", match[1]);
+}

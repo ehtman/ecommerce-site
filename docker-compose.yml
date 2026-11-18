@@ -1,0 +1,19 @@
+# docker-compose.yml – local helper services for development.
+#
+#   Start:  docker compose up -d      (-d = run in the background)
+#   Stop:   docker compose down
+#   Logs:   docker compose logs -f mailpit
+#
+# The database is MongoDB Atlas (cloud), so only Mailpit runs here.
+services:
+  mailpit:
+    # Mailpit = a fake email server. The API "sends" emails to it, and you read them
+    # in a web inbox. Nothing ever reaches a real mailbox.
+    image: axllent/mailpit:latest
+    container_name: shopease-mailpit
+    restart: unless-stopped # start again automatically after a reboot
+    ports:
+      - '8025:8025' # web inbox  → http://localhost:8025
+      - '1025:1025' # SMTP port  → the API sends to localhost:1025 (SMTP_PORT in .env)
+    environment:
+      MP_MAX_MESSAGES: 500 # keep only the latest 500 emails

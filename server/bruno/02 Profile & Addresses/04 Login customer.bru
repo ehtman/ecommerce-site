@@ -1,0 +1,23 @@
+meta {
+  name: Login customer
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{customerEmail}}",
+    "password": "secret123"
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  bru.setEnvVar("customerToken", res.body.data.token);
+}

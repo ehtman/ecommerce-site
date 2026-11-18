@@ -1,0 +1,32 @@
+meta {
+  name: Create sixth address over limit
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Home",
+    "fullName": "Bruno Customer",
+    "phone": "03001234567",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Lahore",
+    "province": "Punjab",
+    "postalCode": "54000"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("explains the limit", function () { expect(res.body.message).to.contain("at most 5"); });
+}

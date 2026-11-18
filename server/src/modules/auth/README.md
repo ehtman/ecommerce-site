@@ -1,0 +1,15 @@
+# src/modules/auth/: authentication
+
+Mounted at **`/api/auth`**. No model of its own; it uses `User` from `../users`.
+
+| File                 | What it does                                                                                                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.validation.js` | Rules for register, login, email-only, token, reset, google. Exports the shared `passwordRule(field)` (8–64 chars, letter + digit).                                                                                                               |
+| `auth.service.js`    | `registerUser`, `loginUser` (with `requireAdmin`), `verifyEmail`, `resendVerification`, `forgotPassword`, `resetPassword`, `googleLogin`. Forces `role: 'customer'`, gives the same message for bad email/password, emails only after DB success. |
+| `google.verifier.js` | `googleVerifier.verify(credential)` wraps Google's `OAuth2Client.verifyIdToken`. Tests replace it with a stub.                                                                                                                                    |
+| `auth.controller.js` | Thin HTTP handlers; login-style answers return `{ token, user }`.                                                                                                                                                                                 |
+| `auth.routes.js`     | 10 routes with limiters, validation and `protect`.                                                                                                                                                                                                |
+| `auth.docs.js`       | OpenAPI for `/auth/*` (the `/users/*` routes are in `users/user.docs.js`).                                                                                                                                                                        |
+
+Full guide: [docs/modules/01-auth.md](../../../../docs/modules/01-auth.md) · Mind map: [docs/mind-maps/01-auth.md](../../../../docs/mind-maps/01-auth.md)
+Tests: `tests/integration/auth.test.js`, `tests/integration/google.test.js`

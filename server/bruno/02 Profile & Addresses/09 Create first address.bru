@@ -1,0 +1,33 @@
+meta {
+  name: Create first address
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Home",
+    "fullName": "Bruno Customer",
+    "phone": "03001234567",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Lahore",
+    "province": "Punjab",
+    "postalCode": "54000"
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("first address is the default", function () { expect(res.body.data.isDefault).to.equal(true); });
+  bru.setEnvVar("addressId", res.body.data._id);
+}
