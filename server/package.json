@@ -6,8 +6,8 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
+    "dev": "node init && nodemon src/server.js",
+    "start": "node init && node src/server.js",
     "seed:admin": "node src/db/scripts/seedAdmin.js",
     "db:indexes": "node src/db/scripts/syncIndexes.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -21,8 +21,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "cd .. && husky server/.husky || true",
-    "db:reset": "node src/scripts/resetDatabase.js"
+    "prepare": "cd .. && husky server/.husky || true"
   },
   "engines": {
     "node": ">=20"

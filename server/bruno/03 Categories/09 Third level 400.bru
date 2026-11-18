@@ -1,0 +1,27 @@
+meta {
+  name: Third level → 400
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "{{categoryName}} Grandchild",
+    "parent": "{{childCategoryId}}"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("two levels only", function () { expect(res.body.message).to.equal("Only two category levels are allowed"); });
+}

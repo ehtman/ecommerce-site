@@ -1,0 +1,20 @@
+meta {
+  name: Delete parent with a sub-category → 400
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{categoryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("explains why", function () { expect(res.body.message).to.equal("Cannot delete: it has 1 sub-category"); });
+}
