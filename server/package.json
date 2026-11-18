@@ -1,0 +1,74 @@
+{
+  "name": "shopease-server",
+  "version": "1.0.0",
+  "description": "ShopEase REST API, built step by step for learning (Express + MongoDB)",
+  "private": true,
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node init && nodemon src/server.js",
+    "start": "node init && node src/server.js",
+    "seed:admin": "node src/db/scripts/seedAdmin.js",
+    "db:indexes": "node src/db/scripts/syncIndexes.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/unit",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/integration",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:api": "newman run postman/ShopEase.postman_collection.json -e postman/ShopEase.local.postman_environment.json",
+    "test:bruno": "cd bruno && npx --yes @usebruno/cli@4.3.0 run --env local -r",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "cd .. && husky server/.husky || true",
+    "db:reset": "node src/scripts/resetDatabase.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^4.22.3",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.7.3",
+    "express-validator": "^7.3.2",
+    "google-auth-library": "^11.3.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.24.8",
+    "morgan": "^1.12.1",
+    "nodemailer": "^10.3.1",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jest": "^29.17.1",
+    "globals": "^17.14.0",
+    "husky": "^9.1.7",
+    "jest": "^30.5.2",
+    "lint-staged": "^17.6.1",
+    "mongodb-memory-server": "^11.3.0",
+    "newman": "^6.2.3",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.10.1",
+    "supertest": "^7.3.2"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "mongodb-memory-server@11.3.0": true
+  }
+}

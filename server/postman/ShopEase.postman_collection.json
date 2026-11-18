@@ -1,0 +1,1526 @@
+{
+  "info": {
+    "_postman_id": "6cea90d2-b39f-445d-bb4b-e515f9146e80",
+    "name": "ShopEase API",
+    "description": "Learning build of the ShopEase API. One folder per module. Import together with the \"ShopEase – local\" environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 Auth",
+      "description": "Run the folder top to bottom (Runner / Newman). Needs: API running, Mailpit running, admin seeded (npm run seed:admin), RATE_LIMIT_ENABLED=false for repeated runs.",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('database connected', () => pm.expect(pm.response.json().data.database).to.eql('connected'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "Register – success",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A fresh random email every run, so the collection can be run many times",
+                  "pm.environment.set('email', 'postman' + Date.now() + '@example.com');",
+                  "pm.environment.set('password', 'secret123');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const result = pm.response.json().data;",
+                  "pm.test('role is customer', () => pm.expect(result.user.role).to.eql('customer'));",
+                  "pm.test('no password in response', () => pm.expect(result.user.password).to.be.undefined);",
+                  "pm.environment.set('token', result.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Register – duplicate email → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 409', () => pm.response.to.have.status(409));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Register – invalid input → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('lists field errors', () => pm.expect(pm.response.json().errors.length).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"A\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Mailpit – read verification email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Reads the newest email from Mailpit and copies the token from its link",
+                  "pm.test('an email arrived in Mailpit', () => pm.response.to.have.status(200));",
+                  "const mail = pm.response.json();",
+                  "pm.test('it is the verify email', () => pm.expect(mail.Subject.toLowerCase()).to.include('verify'));",
+                  "const match = (mail.Text || '').match(/token=([a-f0-9]+)/);",
+                  "pm.test('the email contains a token link', () => pm.expect(match).to.not.equal(null));",
+                  "pm.environment.set('verifyToken', match[1]);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "description": "Needs Mailpit running: `docker compose up -d`. Reads the newest email.",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/message/latest"
+          }
+        },
+        {
+          "name": "Verify email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('now verified', () => pm.expect(pm.response.json().data.isEmailVerified).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verifyToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/verify-email"
+          }
+        },
+        {
+          "name": "Verify email – same link twice → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verifyToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/verify-email"
+          }
+        },
+        {
+          "name": "Login – success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('token', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login – wrong password → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"wrong1234\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Me – with token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('is me', () => pm.expect(pm.response.json().data.email).to.eql(pm.environment.get('email')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Me – without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Resend verification – already verified → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/resend-verification"
+          }
+        },
+        {
+          "name": "Forgot password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Mailpit – read reset email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Reads the newest email from Mailpit and copies the token from its link",
+                  "pm.test('an email arrived in Mailpit', () => pm.response.to.have.status(200));",
+                  "const mail = pm.response.json();",
+                  "pm.test('it is the reset email', () => pm.expect(mail.Subject.toLowerCase()).to.include('reset'));",
+                  "const match = (mail.Text || '').match(/token=([a-f0-9]+)/);",
+                  "pm.test('the email contains a token link', () => pm.expect(match).to.not.equal(null));",
+                  "pm.environment.set('resetToken', match[1]);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "description": "Needs Mailpit running: `docker compose up -d`. Reads the newest email.",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/message/latest"
+          }
+        },
+        {
+          "name": "Reset password",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('oldToken', pm.environment.get('token'));",
+                  "pm.environment.set('password', 'newpass123');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/reset-password"
+          }
+        },
+        {
+          "name": "Me – old token after reset → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401 (old sessions are logged out)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{oldToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Login – with the new password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('token', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Change password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('token', pm.response.json().data.token);",
+                  "pm.environment.set('password', 'changed123');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"changed123\"\n}"
+            },
+            "url": "{{baseUrl}}/users/password"
+          }
+        },
+        {
+          "name": "Change password – wrong current → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"wrong1234\",\n  \"newPassword\": \"another123\"\n}"
+            },
+            "url": "{{baseUrl}}/users/password"
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        },
+        {
+          "name": "Admin login – success",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 (run npm run seed:admin first)', () => pm.response.to.have.status(200));",
+                  "pm.test('is admin', () => pm.expect(pm.response.json().data.user.role).to.eql('admin'));",
+                  "pm.environment.set('adminToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/login"
+          }
+        },
+        {
+          "name": "Admin login – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Profile & Addresses",
+      "description": "Self-contained: registers and verifies its own customer (via Mailpit), registers a second customer for the ownership checks and logs in the admin for the 403 check. Needs: API running, Mailpit running, admin seeded (npm run seed:admin), RATE_LIMIT_ENABLED=false.",
+      "item": [
+        {
+          "name": "Register – fresh customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Folder 02 creates its OWN customer, so it can run on its own (no need to run 01 first)",
+                  "pm.environment.set('customerEmail', 'postman.addr' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('customerToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Address Tester\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Mailpit – read verification email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Reads the newest email from Mailpit and copies the token from its link",
+                  "pm.test('an email arrived in Mailpit', () => pm.response.to.have.status(200));",
+                  "const mail = pm.response.json();",
+                  "pm.test('it was sent to our new customer', () => pm.expect(mail.To[0].Address).to.eql(pm.environment.get('customerEmail')));",
+                  "const match = (mail.Text || '').match(/token=([a-f0-9]+)/);",
+                  "pm.test('the email contains a token link', () => pm.expect(match).to.not.equal(null));",
+                  "pm.environment.set('verifyToken', match[1]);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "description": "Needs Mailpit running: `docker compose up -d`. Reads the newest email.",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/message/latest"
+          }
+        },
+        {
+          "name": "Verify email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('now verified', () => pm.expect(pm.response.json().data.isEmailVerified).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verifyToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/verify-email"
+          }
+        },
+        {
+          "name": "Login – customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('customerToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Profile – get",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const profile = pm.response.json().data;",
+                  "pm.test('is my profile', () => pm.expect(profile.email).to.eql(pm.environment.get('customerEmail')));",
+                  "pm.test('no password in response', () => pm.expect(profile.password).to.be.undefined);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/profile"
+          }
+        },
+        {
+          "name": "Profile – update name + phone (extra fields ignored)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const profile = pm.response.json().data;",
+                  "pm.test('name and phone changed', () => {",
+                  "  pm.expect(profile.name).to.eql('Ali Khan');",
+                  "  pm.expect(profile.phone).to.eql('03001234567');",
+                  "});",
+                  "pm.test('role and email NOT changed (mass assignment ignored)', () => {",
+                  "  pm.expect(profile.role).to.eql('customer');",
+                  "  pm.expect(profile.email).to.eql(pm.environment.get('customerEmail'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ali Khan\",\n  \"phone\": \"03001234567\",\n  \"role\": \"admin\",\n  \"email\": \"hacker@example.com\"\n}"
+            },
+            "url": "{{baseUrl}}/users/profile"
+          }
+        },
+        {
+          "name": "Profile – invalid phone → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error is about phone', () => pm.expect(pm.response.json().errors[0].field).to.eql('phone'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"12345\"\n}"
+            },
+            "url": "{{baseUrl}}/users/profile"
+          }
+        },
+        {
+          "name": "Profile – clear phone",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('phone removed', () => pm.expect(pm.response.json().data.phone).to.be.undefined);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/users/profile"
+          }
+        },
+        {
+          "name": "Profile – without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/profile"
+          }
+        },
+        {
+          "name": "Addresses – list (empty)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no addresses yet', () => pm.expect(pm.response.json().data).to.eql([]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – create first (becomes default)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const address = pm.response.json().data;",
+                  "pm.test('first address is the default', () => pm.expect(address.isDefault).to.eql(true));",
+                  "pm.test('country is Pakistan', () => pm.expect(address.country).to.eql('Pakistan'));",
+                  "pm.environment.set('addressId', address._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Lahore\",\n  \"province\": \"Punjab\",\n  \"postalCode\": \"54000\"\n}"
+            },
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – create second as default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const address = pm.response.json().data;",
+                  "pm.test('the new one is now the default', () => pm.expect(address.isDefault).to.eql(true));",
+                  "pm.environment.set('addressId2', address._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Work\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"Office 5, Shahrah-e-Faisal\",\n  \"city\": \"Karachi\",\n  \"province\": \"Sindh\",\n  \"postalCode\": \"75400\",\n  \"isDefault\": true\n}"
+            },
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – list (exactly one default, listed first)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const addresses = pm.response.json().data;",
+                  "pm.test('two addresses', () => pm.expect(addresses.length).to.eql(2));",
+                  "pm.test('exactly one default', () => pm.expect(addresses.filter((a) => a.isDefault).length).to.eql(1));",
+                  "pm.test('default is first', () => pm.expect(addresses[0]._id).to.eql(pm.environment.get('addressId2')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – set first as default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const addresses = pm.response.json().data;",
+                  "pm.test('returns the list with the new default first', () => {",
+                  "  pm.expect(addresses[0]._id).to.eql(pm.environment.get('addressId'));",
+                  "  pm.expect(addresses[0].isDefault).to.eql(true);",
+                  "  pm.expect(addresses.filter((a) => a.isDefault).length).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses/{{addressId}}/default"
+          }
+        },
+        {
+          "name": "Addresses – update second",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const address = pm.response.json().data;",
+                  "pm.test('city changed', () => pm.expect(address.city).to.eql('Hyderabad'));",
+                  "pm.test('still not the default (isDefault: false never removes a default)', () => pm.expect(address.isDefault).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Work\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"Office 5, Shahrah-e-Faisal\",\n  \"city\": \"Hyderabad\",\n  \"province\": \"Sindh\",\n  \"postalCode\": \"71000\",\n  \"isDefault\": false\n}"
+            },
+            "url": "{{baseUrl}}/addresses/{{addressId2}}"
+          }
+        },
+        {
+          "name": "Addresses – invalid body → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "const fields = pm.response.json().errors.map((e) => e.field);",
+                  "pm.test('lists the bad fields', () => pm.expect(fields).to.include.members(['phone', 'province', 'postalCode']));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"12345\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Lahore\",\n  \"province\": \"Texas\",\n  \"postalCode\": \"5400\"\n}"
+            },
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – malformed id → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('message is Invalid id', () => pm.expect(pm.response.json().message).to.eql('Invalid id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Lahore\",\n  \"province\": \"Punjab\",\n  \"postalCode\": \"54000\"\n}"
+            },
+            "url": "{{baseUrl}}/addresses/not-an-id"
+          }
+        },
+        {
+          "name": "Addresses – fill up to 5",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// We have 2 addresses. Add 2 more here (one after the other), then this request saves the 5th.",
+                  "const add = (city, done) =>",
+                  "  pm.sendRequest(",
+                  "    {",
+                  "      url: pm.environment.get('baseUrl') + '/addresses',",
+                  "      method: 'POST',",
+                  "      header: {",
+                  "        'Content-Type': 'application/json',",
+                  "        Authorization: 'Bearer ' + pm.environment.get('customerToken'),",
+                  "      },",
+                  "      body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ fullName: 'Postman Customer', phone: '03001234567', addressLine1: 'House 1, Main Road', city, province: 'Punjab', postalCode: '54000' }),",
+                  "      },",
+                  "    },",
+                  "    (err, res) => {",
+                  "      pm.test('setup address ' + city + ' saved', () => pm.expect(err ? 0 : res.code).to.eql(201));",
+                  "      if (done) done();",
+                  "    },",
+                  "  );",
+                  "add('Faisalabad', () => add('Rawalpindi'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201 (5th address)', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Other\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Multan\",\n  \"province\": \"Punjab\",\n  \"postalCode\": \"60000\"\n}"
+            },
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – 6th address → 400 (max 5)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains the limit', () => pm.expect(pm.response.json().message).to.include('at most 5'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Lahore\",\n  \"province\": \"Punjab\",\n  \"postalCode\": \"54000\"\n}"
+            },
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Register – second customer (for ownership checks)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('otherEmail', 'postman.other' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('otherToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Other Customer\",\n  \"email\": \"{{otherEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Ownership – other customer sees an empty list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"cannot see the first customer's addresses\", () => pm.expect(pm.response.json().data).to.eql([]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Ownership – update someone else's address → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404 (not 403, so it does not even confirm the id exists)', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Home\",\n  \"fullName\": \"Postman Customer\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Hacked\",\n  \"province\": \"Punjab\",\n  \"postalCode\": \"54000\"\n}"
+            },
+            "url": "{{baseUrl}}/addresses/{{addressId}}"
+          }
+        },
+        {
+          "name": "Ownership – set someone else's default → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses/{{addressId}}/default"
+          }
+        },
+        {
+          "name": "Ownership – delete someone else's address → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses/{{addressId}}"
+          }
+        },
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 (run npm run seed:admin first)', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('adminToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/login"
+          }
+        },
+        {
+          "name": "Admin – addresses → 403 (customers only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – delete the default",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses/{{addressId}}"
+          }
+        },
+        {
+          "name": "Addresses – list after delete (newest became default)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const addresses = pm.response.json().data;",
+                  "pm.test('four left', () => pm.expect(addresses.length).to.eql(4));",
+                  "pm.test('still exactly one default', () => pm.expect(addresses.filter((a) => a.isDefault).length).to.eql(1));",
+                  "pm.test('the deleted one is gone', () => pm.expect(addresses.map((a) => a._id)).to.not.include(pm.environment.get('addressId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Addresses – delete again → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses/{{addressId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

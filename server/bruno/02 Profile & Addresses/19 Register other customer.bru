@@ -1,0 +1,28 @@
+meta {
+  name: Register other customer
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Other Customer",
+    "email": "{{otherEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar("otherEmail", "bruno.other" + Date.now() + "@example.com");
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("otherToken", res.body.data.token);
+}

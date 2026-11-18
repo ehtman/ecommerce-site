@@ -1,0 +1,21 @@
+meta {
+  name: Set first as default
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/addresses/{{addressId}}/default
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("new default listed first", function () { expect(res.body.data[0]._id).to.equal(bru.getEnvVar("addressId")); });
+  test("exactly one default", function () { expect(res.body.data.filter(function (a) { return a.isDefault; })).to.have.length(1); });
+}

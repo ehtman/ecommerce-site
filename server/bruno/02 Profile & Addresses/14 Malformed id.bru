@@ -1,0 +1,32 @@
+meta {
+  name: Malformed id
+  type: http
+  seq: 14
+}
+
+put {
+  url: {{baseUrl}}/addresses/not-an-id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "label": "Home",
+    "fullName": "Bruno Customer",
+    "phone": "03001234567",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Lahore",
+    "province": "Punjab",
+    "postalCode": "54000"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("message is Invalid id", function () { expect(res.body.message).to.equal("Invalid id"); });
+}
