@@ -1,0 +1,16 @@
+meta {
+  name: Brands
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/products/brands
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("includes PostmanBrand", function () { expect(res.body.data.includes('PostmanBrand')).to.eql(true); });
+}

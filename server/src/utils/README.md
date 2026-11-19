@@ -7,6 +7,8 @@
 | `asyncHandler.js`  | `asyncHandler(fn)`                                | Wraps async controllers so thrown errors reach `next(err)` (Express 4 doesn't do it).                                   |
 | `generateToken.js` | `generateToken(user)`                             | Signs a JWT `{ id, role, v }` with `JWT_SECRET`, expiring after `JWT_EXPIRES_IN`.                                       |
 
-Later branches add `pagination.js` and `pricing.js` here.
+| `pagination.js` | `getPagination(query, default, max)`, `buildMeta(page, limit, total)` | Safe `page`/`limit`/`skip` from the query string (capped) and the `meta` object for list responses. |
+
+A later branch adds `pricing.js` here.
 
 Tests: `tests/unit/utils.test.js`

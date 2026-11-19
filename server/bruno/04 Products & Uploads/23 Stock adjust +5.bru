@@ -1,0 +1,28 @@
+meta {
+  name: Stock – adjust +5
+  type: http
+  seq: 23
+}
+
+patch {
+  url: {{baseUrl}}/products/{{productId}}/stock
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "mode": "adjust",
+    "value": 5,
+    "reason": "New delivery"
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("stock is 25", function () { expect(res.body.data.stock).to.eql(25); });
+}

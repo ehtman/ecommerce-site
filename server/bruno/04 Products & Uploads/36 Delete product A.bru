@@ -1,0 +1,20 @@
+meta {
+  name: Delete product A
+  type: http
+  seq: 36
+}
+
+delete {
+  url: {{baseUrl}}/products/{{productId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("really deleted", function () { expect(res.body.data.softDeleted).to.eql(false); });
+}

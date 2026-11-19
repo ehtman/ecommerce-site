@@ -2170,6 +2170,1134 @@
           }
         }
       ]
+    },
+    {
+      "name": "04 Products & Uploads",
+      "description": "Self-contained: logs in the seeded admin, registers a customer (for the 403 checks), creates its own category and three products (one inactive), then exercises filters, search, sorting, pagination, stock, image removal and the upload guards, and finally deletes everything it created. Cloudinary keys are NOT needed: the upload requests check the 400/401/403 paths. Needs: API running, admin seeded (npm run seed:admin), RATE_LIMIT_ENABLED=false.",
+      "item": [
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Folder 04 is self-contained: it logs in the seeded admin and makes a run id for unique names",
+                  "pm.environment.set('productRunId', String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('adminToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register customer (for the 403 checks)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('customerEmail', 'products' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('customerToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Product Shopper\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create category (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('categoryId', pm.response.json().data._id);",
+                  "pm.environment.set('categorySlug', pm.response.json().data.slug);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"P04 Category {{productRunId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create product A (lower-case SKU is upper-cased)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test(\"SKU stored upper-case\", () => pm.expect(pm.response.json().data.sku).to.eql('PM-' + pm.environment.get('productRunId') + '-A'));",
+                  "pm.test(\"slug built from the name\", () => pm.expect(pm.response.json().data.slug).to.eql('postman-shirt-pm' + pm.environment.get('productRunId')));",
+                  "pm.test(\"image got an id\", () => pm.expect(typeof pm.response.json().data.images[0]._id).to.eql('string'));",
+                  "pm.environment.set('productId', pm.response.json().data._id);",
+                  "pm.environment.set('productSlug', pm.response.json().data.slug);",
+                  "pm.environment.set('imageId', pm.response.json().data.images[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"pm-{{productRunId}}-a\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Create product B (sold out)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('product2Id', pm.response.json().data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Mug pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-B\",\n  \"price\": 900,\n  \"compareAtPrice\": null,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 0,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-b.jpg\",\n      \"publicId\": \"shopease/products/postman-b\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Create product C (inactive)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('inactiveId', pm.response.json().data._id);",
+                  "pm.environment.set('inactiveSlug', pm.response.json().data.slug);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Hidden pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-C\",\n  \"price\": 1200,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-c.jpg\",\n      \"publicId\": \"shopease/products/postman-c\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true,\n  \"isActive\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Create – duplicate SKU → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test(\"error is on sku\", () => pm.expect(pm.response.json().errors[0].field).to.eql('sku'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Copy pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"pm-{{productRunId}}-a\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Create – invalid body → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"price and images rejected\", () => pm.expect(pm.response.json().errors.map((e) => e.field).sort().join(',')).to.eql('images,price'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-X\",\n  \"price\": 0,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Create – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-Y\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Create – without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-Z\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "List – by category (only active products)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"2 active products (C is hidden)\", () => pm.expect(pm.response.json().meta.total).to.eql(2));",
+                  "pm.test(\"no inactive product in the list\", () => pm.expect(pm.response.json().data.some((p) => p.name.startsWith('Postman Hidden'))).to.eql(false));",
+                  "pm.test(\"cards have no description\", () => pm.expect(pm.response.json().data[0].description).to.eql(undefined));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?category={{categorySlug}}"
+          }
+        },
+        {
+          "name": "List – sort price_asc, 1 per page, page 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"page 2 holds the dearer product\", () => pm.expect(pm.response.json().data[0].price).to.eql(1500));",
+                  "pm.test(\"meta\", () => pm.expect(JSON.stringify(pm.response.json().meta)).to.eql(JSON.stringify({ page: 2, limit: 1, total: 2, pages: 2 })));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?category={{categorySlug}}&sort=price_asc&limit=1&page=2"
+          }
+        },
+        {
+          "name": "List – price filter minPrice=1000",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"only product A\", () => pm.expect(pm.response.json().data.map((p) => p.price).join()).to.eql('1500'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?category={{categorySlug}}&minPrice=1000"
+          }
+        },
+        {
+          "name": "List – keyword search (text index)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"A and B found, hidden C not\", () => pm.expect(pm.response.json().meta.total).to.eql(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?keyword=pm{{productRunId}}"
+          }
+        },
+        {
+          "name": "List – inStock=true hides sold-out",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"only the product with stock\", () => pm.expect(pm.response.json().meta.total).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?category={{categorySlug}}&inStock=true"
+          }
+        },
+        {
+          "name": "Brands",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"includes PostmanBrand\", () => pm.expect(pm.response.json().data.includes('PostmanBrand')).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/brands"
+          }
+        },
+        {
+          "name": "Get by slug",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"category is populated\", () => pm.expect(pm.response.json().data.category.slug).to.eql(pm.environment.get('categorySlug')));",
+                  "pm.test(\"computed discount\", () => pm.expect(pm.response.json().data.discountPercent).to.eql(25));",
+                  "pm.test(\"computed inStock\", () => pm.expect(pm.response.json().data.inStock).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{productSlug}}"
+          }
+        },
+        {
+          "name": "Get inactive product → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{inactiveSlug}}"
+          }
+        },
+        {
+          "name": "Update product A (add a second image)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"two images now\", () => pm.expect(pm.response.json().data.images.length).to.eql(2));",
+                  "pm.test(\"stock is NOT changed by PUT\", () => pm.expect(pm.response.json().data.stock).to.eql(20));",
+                  "pm.environment.set('imageId', pm.response.json().data.images[0]._id);",
+                  "pm.environment.set('image2Id', pm.response.json().data.images[1]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-A\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 999,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    },\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a2.jpg\",\n      \"publicId\": \"shopease/products/postman-a2\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Update – malformed id → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"message is Invalid id\", () => pm.expect(pm.response.json().message).to.eql('Invalid id'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/not-an-id",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-A\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Update – unknown id → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/665f1c2e9b1e8a0012345678",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-Q\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Update – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Shirt pm{{productRunId}}\",\n  \"description\": \"A soft cotton shirt created by the API test collection.\",\n  \"brand\": \"PostmanBrand\",\n  \"sku\": \"PM-{{productRunId}}-A\",\n  \"price\": 1500,\n  \"compareAtPrice\": 2000,\n  \"category\": \"{{categoryId}}\",\n  \"stock\": 20,\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg\",\n      \"publicId\": \"shopease/products/postman-a\"\n    }\n  ],\n  \"specifications\": [\n    {\n      \"key\": \"Material\",\n      \"value\": \"Cotton\"\n    }\n  ],\n  \"isFeatured\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Stock – adjust +5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"stock is 25\", () => pm.expect(pm.response.json().data.stock).to.eql(25));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}/stock",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"adjust\",\n  \"value\": 5,\n  \"reason\": \"New delivery\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Stock – below zero → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"message\", () => pm.expect(pm.response.json().message).to.eql('Stock cannot go below zero'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}/stock",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"adjust\",\n  \"value\": -100,\n  \"reason\": \"Too many\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Stock – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}/stock",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"set\",\n  \"value\": 1,\n  \"reason\": \"Hacking\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove one image",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"one image left\", () => pm.expect(pm.response.json().data.images.length).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}/images/{{image2Id}}"
+          }
+        },
+        {
+          "name": "Remove the last image → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"message\", () => pm.expect(pm.response.json().message).to.eql('A product needs at least one image'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}/images/{{imageId}}"
+          }
+        },
+        {
+          "name": "Upload – no file → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is on image\", () => pm.expect(pm.response.json().errors[0].field).to.eql('image'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/uploads/image?folder=products",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "note",
+                  "value": "no file attached",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload – bad folder → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is on folder\", () => pm.expect(pm.response.json().errors[0].field).to.eql('folder'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/uploads/image?folder=secrets",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "note",
+                  "value": "no file attached",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/uploads/image",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "note",
+                  "value": "no file attached",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload – without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/uploads/image",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "note",
+                  "value": "no file attached",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete upload – foreign publicId → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/uploads/image",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"publicId\": \"someone-else/photo\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete upload – own publicId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"answers with deleted flag\", () => pm.expect(typeof pm.response.json().data.deleted).to.eql('boolean'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/uploads/image",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"publicId\": \"shopease/products/postman-unused\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete category in use → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"explains why\", () => pm.expect(/product\\(s\\) use this category/.test(pm.response.json().message)).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Delete product – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{customerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{product2Id}}"
+          }
+        },
+        {
+          "name": "Delete product A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"really deleted\", () => pm.expect(pm.response.json().data.softDeleted).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Get deleted product → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{productSlug}}"
+          }
+        },
+        {
+          "name": "Clean up – delete product B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{product2Id}}"
+          }
+        },
+        {
+          "name": "Clean up – delete product C",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{inactiveId}}"
+          }
+        },
+        {
+          "name": "Clean up – delete the empty category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        }
+      ]
     }
   ]
 }

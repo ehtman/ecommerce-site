@@ -1,0 +1,18 @@
+meta {
+  name: Get by slug
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/products/{{productSlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("category is populated", function () { expect(res.body.data.category.slug).to.eql(bru.getEnvVar('categorySlug')); });
+  test("computed discount", function () { expect(res.body.data.discountPercent).to.eql(25); });
+  test("computed inStock", function () { expect(res.body.data.inStock).to.eql(true); });
+}
