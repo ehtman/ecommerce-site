@@ -53,7 +53,8 @@ const inputProperties = {
   image: {
     allOf: [ref('Image')],
     nullable: true,
-    description: 'An image already on Cloudinary. null removes it. (Uploads arrive in branch 04)',
+    description:
+      'An image already on Cloudinary (upload it with POST /api/uploads/image?folder=categories). null removes it.',
   },
   isActive: { type: 'boolean', default: true, description: 'false = hidden from customers' },
   sortOrder: { type: 'integer', minimum: 0, maximum: 1000, default: 0 },

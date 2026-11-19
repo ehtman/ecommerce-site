@@ -1,0 +1,26 @@
+meta {
+  name: Delete upload – own publicId
+  type: http
+  seq: 33
+}
+
+delete {
+  url: {{baseUrl}}/uploads/image
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "publicId": "shopease/products/postman-unused"
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("answers with deleted flag", function () { expect(typeof res.body.data.deleted).to.eql('boolean'); });
+}

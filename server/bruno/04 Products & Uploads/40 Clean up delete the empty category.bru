@@ -1,0 +1,19 @@
+meta {
+  name: Clean up – delete the empty category
+  type: http
+  seq: 40
+}
+
+delete {
+  url: {{baseUrl}}/categories/{{categoryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}

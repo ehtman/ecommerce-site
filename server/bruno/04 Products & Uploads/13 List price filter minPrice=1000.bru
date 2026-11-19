@@ -1,0 +1,21 @@
+meta {
+  name: List – price filter minPrice=1000
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/products?category={{categorySlug}}&minPrice=1000
+  body: none
+  auth: none
+}
+
+params:query {
+  category: {{categorySlug}}
+  minPrice: 1000
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("only product A", function () { expect(res.body.data.map((p) => p.price).join()).to.eql('1500'); });
+}

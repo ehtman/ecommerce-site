@@ -1,0 +1,45 @@
+meta {
+  name: Update – unknown id → 404
+  type: http
+  seq: 21
+}
+
+put {
+  url: {{baseUrl}}/products/665f1c2e9b1e8a0012345678
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Postman Shirt pm{{productRunId}}",
+    "description": "A soft cotton shirt created by the API test collection.",
+    "brand": "PostmanBrand",
+    "sku": "PM-{{productRunId}}-Q",
+    "price": 1500,
+    "compareAtPrice": 2000,
+    "category": "{{categoryId}}",
+    "stock": 20,
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg",
+        "publicId": "shopease/products/postman-a"
+      }
+    ],
+    "specifications": [
+      {
+        "key": "Material",
+        "value": "Cotton"
+      }
+    ],
+    "isFeatured": true
+  }
+}
+
+tests {
+  test("status is 404", function () { expect(res.status).to.equal(404); });
+}

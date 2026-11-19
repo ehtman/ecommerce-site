@@ -1,0 +1,25 @@
+meta {
+  name: Delete upload – foreign publicId → 400
+  type: http
+  seq: 32
+}
+
+delete {
+  url: {{baseUrl}}/uploads/image
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "publicId": "someone-else/photo"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+}

@@ -1,0 +1,51 @@
+meta {
+  name: Create product A (lower-case SKU is upper-cased)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Postman Shirt pm{{productRunId}}",
+    "description": "A soft cotton shirt created by the API test collection.",
+    "brand": "PostmanBrand",
+    "sku": "pm-{{productRunId}}-a",
+    "price": 1500,
+    "compareAtPrice": 2000,
+    "category": "{{categoryId}}",
+    "stock": 20,
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg",
+        "publicId": "shopease/products/postman-a"
+      }
+    ],
+    "specifications": [
+      {
+        "key": "Material",
+        "value": "Cotton"
+      }
+    ],
+    "isFeatured": true
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("SKU stored upper-case", function () { expect(res.body.data.sku).to.eql('PM-' + bru.getEnvVar('productRunId') + '-A'); });
+  test("slug built from the name", function () { expect(res.body.data.slug).to.eql('postman-shirt-pm' + bru.getEnvVar('productRunId')); });
+  test("image got an id", function () { expect(typeof res.body.data.images[0]._id).to.eql('string'); });
+  bru.setEnvVar("productId", res.body.data._id);
+  bru.setEnvVar("productSlug", res.body.data.slug);
+  bru.setEnvVar("imageId", res.body.data.images[0]._id);
+}

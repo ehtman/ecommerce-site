@@ -1,0 +1,27 @@
+meta {
+  name: Create category (admin)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "P04 Category {{productRunId}}"
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("categoryId", res.body.data._id);
+  bru.setEnvVar("categorySlug", res.body.data.slug);
+}

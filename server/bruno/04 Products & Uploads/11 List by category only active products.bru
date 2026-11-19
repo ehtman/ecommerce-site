@@ -1,0 +1,22 @@
+meta {
+  name: List – by category (only active products)
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/products?category={{categorySlug}}
+  body: none
+  auth: none
+}
+
+params:query {
+  category: {{categorySlug}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("2 active products (C is hidden)", function () { expect(res.body.meta.total).to.eql(2); });
+  test("no inactive product in the list", function () { expect(res.body.data.some((p) => p.name.startsWith('Postman Hidden'))).to.eql(false); });
+  test("cards have no description", function () { expect(res.body.data[0].description).to.eql(undefined); });
+}

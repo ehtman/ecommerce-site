@@ -26,6 +26,8 @@ import authRoutes from './modules/auth/auth.routes.js';
 import userRoutes from './modules/users/user.routes.js';
 import addressRoutes from './modules/addresses/address.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
+import productRoutes from './modules/products/product.routes.js';
+import uploadRoutes from './modules/uploads/upload.routes.js';
 
 const app = express();
 
@@ -70,6 +72,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/categories', categoryRoutes); // public reads + admin writes
+app.use('/api/products', productRoutes);
+app.use('/api/uploads', uploadRoutes); // admin image uploads (multipart → Cloudinary)
 
 // ---------- Fallbacks (must be LAST) ----------
 app.use(notFound); // no route matched → 404
