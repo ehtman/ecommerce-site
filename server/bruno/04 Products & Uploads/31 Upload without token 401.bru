@@ -1,0 +1,19 @@
+meta {
+  name: Upload – without token → 401
+  type: http
+  seq: 31
+}
+
+post {
+  url: {{baseUrl}}/uploads/image
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  note: no file attached
+}
+
+tests {
+  test("status is 401", function () { expect(res.status).to.equal(401); });
+}

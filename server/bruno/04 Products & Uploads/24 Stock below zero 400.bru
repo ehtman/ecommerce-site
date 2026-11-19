@@ -1,0 +1,28 @@
+meta {
+  name: Stock – below zero → 400
+  type: http
+  seq: 24
+}
+
+patch {
+  url: {{baseUrl}}/products/{{productId}}/stock
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "mode": "adjust",
+    "value": -100,
+    "reason": "Too many"
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("message", function () { expect(res.body.message).to.eql('Stock cannot go below zero'); });
+}

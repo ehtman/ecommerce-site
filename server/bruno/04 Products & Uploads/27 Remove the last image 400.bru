@@ -1,0 +1,20 @@
+meta {
+  name: Remove the last image → 400
+  type: http
+  seq: 27
+}
+
+delete {
+  url: {{baseUrl}}/products/{{productId}}/images/{{imageId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("message", function () { expect(res.body.message).to.eql('A product needs at least one image'); });
+}

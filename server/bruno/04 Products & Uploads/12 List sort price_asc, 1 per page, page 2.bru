@@ -1,0 +1,24 @@
+meta {
+  name: List – sort price_asc, 1 per page, page 2
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/products?category={{categorySlug}}&sort=price_asc&limit=1&page=2
+  body: none
+  auth: none
+}
+
+params:query {
+  category: {{categorySlug}}
+  sort: price_asc
+  limit: 1
+  page: 2
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("page 2 holds the dearer product", function () { expect(res.body.data[0].price).to.eql(1500); });
+  test("meta", function () { expect(JSON.stringify(res.body.meta)).to.eql(JSON.stringify({ page: 2, limit: 1, total: 2, pages: 2 })); });
+}

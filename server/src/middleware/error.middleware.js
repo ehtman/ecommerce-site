@@ -35,6 +35,12 @@ export default function errorHandler(err, _req, res, _next) {
     statusCode = 409; // 409 Conflict
     message = `${field} already exists`;
     errors = [{ field, message }];
+  } else if (err.name === 'MulterError') {
+    // A file upload broke one of multer's limits (upload.middleware.js): too big, too many
+    // files, or sent under the wrong form-field name. All are client mistakes → 400.
+    statusCode = 400;
+    message = err.code === 'LIMIT_FILE_SIZE' ? 'Each image must be 2 MB or less' : err.message;
+    errors = [{ field: err.field || 'file', message }];
   } else if (err.type === 'entity.parse.failed') {
     // The request body was not valid JSON
     statusCode = 400;

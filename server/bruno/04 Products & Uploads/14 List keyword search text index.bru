@@ -1,0 +1,20 @@
+meta {
+  name: List – keyword search (text index)
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/products?keyword=pm{{productRunId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  keyword: pm{{productRunId}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("A and B found, hidden C not", function () { expect(res.body.meta.total).to.eql(2); });
+}

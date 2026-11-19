@@ -8,3 +8,4 @@
 export { default as User } from './users/user.model.js';
 export { default as Address } from './addresses/address.model.js';
 export { default as Category } from './categories/category.model.js';
+export { default as Product } from './products/product.model.js';

@@ -1,0 +1,46 @@
+meta {
+  name: Update – malformed id → 400
+  type: http
+  seq: 20
+}
+
+put {
+  url: {{baseUrl}}/products/not-an-id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Postman Shirt pm{{productRunId}}",
+    "description": "A soft cotton shirt created by the API test collection.",
+    "brand": "PostmanBrand",
+    "sku": "PM-{{productRunId}}-A",
+    "price": 1500,
+    "compareAtPrice": 2000,
+    "category": "{{categoryId}}",
+    "stock": 20,
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg",
+        "publicId": "shopease/products/postman-a"
+      }
+    ],
+    "specifications": [
+      {
+        "key": "Material",
+        "value": "Cotton"
+      }
+    ],
+    "isFeatured": true
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("message is Invalid id", function () { expect(res.body.message).to.eql('Invalid id'); });
+}

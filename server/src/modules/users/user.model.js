@@ -47,6 +47,13 @@ const userSchema = new Schema(
       trim: true,
       match: [REGEX.PK_PHONE, 'Phone must be 03XXXXXXXXX'],
     },
+    // Profile picture: { url, publicId } like every other image (db/schemas/image.schema.js),
+    // but NOT that sub-schema: a Google photo lives on googleusercontent.com, not Cloudinary,
+    // and has no publicId. Optional; set from Google on first sign-in (auth.service.js).
+    avatar: {
+      url: { type: String, trim: true },
+      publicId: { type: String, trim: true }, // only for pictures we uploaded to Cloudinary
+    },
     password: {
       type: String,
       select: false, // never loaded unless a query asks with .select('+password')

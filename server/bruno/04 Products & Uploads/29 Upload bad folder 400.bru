@@ -1,0 +1,28 @@
+meta {
+  name: Upload – bad folder → 400
+  type: http
+  seq: 29
+}
+
+post {
+  url: {{baseUrl}}/uploads/image?folder=secrets
+  body: multipartForm
+  auth: bearer
+}
+
+params:query {
+  folder: secrets
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:multipart-form {
+  note: no file attached
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("error is on folder", function () { expect(res.body.errors[0].field).to.eql('folder'); });
+}

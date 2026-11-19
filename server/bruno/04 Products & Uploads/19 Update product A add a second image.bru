@@ -1,0 +1,53 @@
+meta {
+  name: Update product A (add a second image)
+  type: http
+  seq: 19
+}
+
+put {
+  url: {{baseUrl}}/products/{{productId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Postman Shirt pm{{productRunId}}",
+    "description": "A soft cotton shirt created by the API test collection.",
+    "brand": "PostmanBrand",
+    "sku": "PM-{{productRunId}}-A",
+    "price": 1500,
+    "compareAtPrice": 2000,
+    "category": "{{categoryId}}",
+    "stock": 999,
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a.jpg",
+        "publicId": "shopease/products/postman-a"
+      },
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/shopease/products/postman-a2.jpg",
+        "publicId": "shopease/products/postman-a2"
+      }
+    ],
+    "specifications": [
+      {
+        "key": "Material",
+        "value": "Cotton"
+      }
+    ],
+    "isFeatured": true
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("two images now", function () { expect(res.body.data.images.length).to.eql(2); });
+  test("stock is NOT changed by PUT", function () { expect(res.body.data.stock).to.eql(20); });
+  bru.setEnvVar("imageId", res.body.data.images[0]._id);
+  bru.setEnvVar("image2Id", res.body.data.images[1]._id);
+}
