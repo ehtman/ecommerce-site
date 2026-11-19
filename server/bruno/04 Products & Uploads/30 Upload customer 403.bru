@@ -1,0 +1,23 @@
+meta {
+  name: Upload – customer → 403
+  type: http
+  seq: 30
+}
+
+post {
+  url: {{baseUrl}}/uploads/image
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:multipart-form {
+  note: no file attached
+}
+
+tests {
+  test("status is 403", function () { expect(res.status).to.equal(403); });
+}

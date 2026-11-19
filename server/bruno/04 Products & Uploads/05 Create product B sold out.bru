@@ -1,0 +1,46 @@
+meta {
+  name: Create product B (sold out)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Postman Mug pm{{productRunId}}",
+    "description": "A soft cotton shirt created by the API test collection.",
+    "brand": "PostmanBrand",
+    "sku": "PM-{{productRunId}}-B",
+    "price": 900,
+    "compareAtPrice": null,
+    "category": "{{categoryId}}",
+    "stock": 0,
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/shopease/products/postman-b.jpg",
+        "publicId": "shopease/products/postman-b"
+      }
+    ],
+    "specifications": [
+      {
+        "key": "Material",
+        "value": "Cotton"
+      }
+    ],
+    "isFeatured": false
+  }
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("product2Id", res.body.data._id);
+}

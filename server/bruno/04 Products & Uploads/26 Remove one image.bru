@@ -1,0 +1,20 @@
+meta {
+  name: Remove one image
+  type: http
+  seq: 26
+}
+
+delete {
+  url: {{baseUrl}}/products/{{productId}}/images/{{image2Id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("one image left", function () { expect(res.body.data.images.length).to.eql(1); });
+}

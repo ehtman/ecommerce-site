@@ -53,6 +53,14 @@ const env = {
   // ---------- Google login (optional) ----------
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '', // empty = Google login disabled
 
+  // ---------- Cloudinary image hosting (optional) ----------
+  // Cloudinary stores our product images and serves them from a fast CDN. All three values
+  // come from Cloudinary → Dashboard → API keys. Empty = uploads answer 500 "not configured"
+  // (everything else still works). See docs/concepts/17-file-uploads-and-cdn.md.
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || '', // your account's name in URLs
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '', // public part of the key pair
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '', // SECRET: never commit it
+
   // ---------- Rate limiting ----------
   // Only the exact text "false" turns limits off (handy for repeated Postman runs and tests).
   RATE_LIMIT_ENABLED: process.env.RATE_LIMIT_ENABLED !== 'false',

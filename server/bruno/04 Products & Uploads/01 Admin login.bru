@@ -1,0 +1,28 @@
+meta {
+  name: Admin login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/admin/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:pre-request {
+  // Folder 04 is self-contained: it logs in the seeded admin and makes a run id for unique names
+  bru.setEnvVar("productRunId", String(Date.now()));
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  bru.setEnvVar("adminToken", res.body.data.token);
+}

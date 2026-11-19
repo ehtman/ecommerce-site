@@ -1,0 +1,21 @@
+meta {
+  name: List – inStock=true hides sold-out
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/products?category={{categorySlug}}&inStock=true
+  body: none
+  auth: none
+}
+
+params:query {
+  category: {{categorySlug}}
+  inStock: true
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("only the product with stock", function () { expect(res.body.meta.total).to.eql(1); });
+}

@@ -145,6 +145,8 @@ export async function googleLogin(credential) {
       email,
       googleId: payload.sub,
       authProvider: 'google',
+      // Google's profile photo URL (if the person has one) becomes their avatar
+      avatar: payload.picture ? { url: payload.picture } : undefined,
     }));
   }
 

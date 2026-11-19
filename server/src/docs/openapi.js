@@ -13,6 +13,8 @@ import authDocs from '../modules/auth/auth.docs.js';
 import userDocs from '../modules/users/user.docs.js';
 import addressDocs from '../modules/addresses/address.docs.js';
 import categoryDocs from '../modules/categories/category.docs.js';
+import productDocs from '../modules/products/product.docs.js';
+import uploadDocs from '../modules/uploads/upload.docs.js';
 
 const spec = {
   openapi: '3.0.3',
@@ -51,6 +53,11 @@ const spec = {
           name: { type: 'string', example: 'Ali Khan' },
           email: { type: 'string', example: 'ali@example.com' },
           phone: { type: 'string', example: '03001234567', description: 'Optional' },
+          avatar: {
+            type: 'object',
+            description: 'Optional profile picture (Google photo or Cloudinary image)',
+            properties: { url: { type: 'string' }, publicId: { type: 'string' } },
+          },
           role: { type: 'string', enum: ['customer', 'admin'] },
           authProvider: { type: 'string', enum: ['local', 'google'] },
           isEmailVerified: { type: 'boolean' },
@@ -77,11 +84,12 @@ const spec = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
-      // A stored image (db/schemas/image.schema.js). Reused by products in branch 04.
+      // A stored image (db/schemas/image.schema.js), used by categories and products.
       Image: {
         type: 'object',
         required: ['url', 'publicId'],
         properties: {
+          _id: { type: 'string', description: 'Set by the server once saved in a product' },
           url: {
             type: 'string',
             example:
@@ -102,6 +110,52 @@ const spec = {
           image: { $ref: '#/components/schemas/Image' },
           isActive: { type: 'boolean' },
           sortOrder: { type: 'integer', example: 0 },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      // Pagination info sent next to every paged list (utils/pagination.js)
+      PageMeta: {
+        type: 'object',
+        properties: {
+          page: { type: 'integer', example: 1 },
+          limit: { type: 'integer', example: 12 },
+          total: { type: 'integer', example: 30 },
+          pages: { type: 'integer', example: 3 },
+        },
+      },
+      Product: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '665f1c2e9b1e8a0012345680' },
+          name: { type: 'string', example: 'Blue Cotton Shirt' },
+          slug: { type: 'string', example: 'blue-cotton-shirt' },
+          description: { type: 'string' },
+          brand: { type: 'string', example: 'Khaadi' },
+          sku: { type: 'string', example: 'SHIRT-BLU-M' },
+          price: { type: 'integer', example: 1999 },
+          compareAtPrice: { type: 'integer', example: 2500 },
+          discountPercent: { type: 'integer', example: 20, description: 'computed' },
+          category: {
+            description: 'Category id, or { _id, name, slug, parent } on the detail page',
+            oneOf: [{ type: 'string' }, { type: 'object' }],
+          },
+          images: { type: 'array', items: { $ref: '#/components/schemas/Image' } },
+          stock: { type: 'integer', example: 20 },
+          inStock: { type: 'boolean', description: 'computed: stock > 0' },
+          sold: { type: 'integer', example: 0 },
+          specifications: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { key: { type: 'string' }, value: { type: 'string' } },
+            },
+          },
+          ratingAverage: { type: 'number', example: 4.5 },
+          ratingCount: { type: 'integer', example: 12 },
+          isFeatured: { type: 'boolean' },
+          isActive: { type: 'boolean' },
+          createdBy: { type: 'string' },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
@@ -159,6 +213,8 @@ const spec = {
     ...userDocs.tags,
     ...addressDocs.tags,
     ...categoryDocs.tags,
+    ...productDocs.tags,
+    ...uploadDocs.tags,
   ],
   paths: {
     '/health': {
@@ -172,6 +228,8 @@ const spec = {
     ...userDocs.paths,
     ...addressDocs.paths,
     ...categoryDocs.paths,
+    ...productDocs.paths,
+    ...uploadDocs.paths,
   },
 };
 

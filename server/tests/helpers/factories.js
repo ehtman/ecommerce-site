@@ -4,9 +4,10 @@
  * "Factories" keep tests short and readable: a test says WHAT it needs
  * ("a verified customer") instead of repeating HOW to build one each time.
  */
+import mongoose from 'mongoose';
 import request from 'supertest';
 import app from '../../src/app.js';
-import { User, Address, Category } from '../../src/modules/models.js';
+import { User, Address, Category, Product } from '../../src/modules/models.js';
 import generateToken from '../../src/utils/generateToken.js';
 import { outbox } from '../../src/emails/sendEmail.js';
 
@@ -70,6 +71,49 @@ let categoryCounter = 0;
  */
 export const createCategory = (overrides = {}) =>
   Category.create({ name: `Category ${Date.now()}-${(categoryCounter += 1)}`, ...overrides });
+
+let productCounter = 0;
+// A Cloudinary-looking image (the url must match REGEX.CLOUDINARY_URL). Nothing is uploaded.
+export const fakeImage = (name = 'sample') => ({
+  url: `https://res.cloudinary.com/demo/image/upload/shopease/products/${name}.jpg`,
+  publicId: `shopease/products/${name}`,
+});
+
+/**
+ * A complete, valid product BODY (what the admin form sends to POST/PUT /api/products).
+ * `category` must be an existing category id. SKU is unique per call.
+ */
+export const validProduct = (category, overrides = {}) => {
+  productCounter += 1;
+  return {
+    name: `Test Product ${productCounter}`,
+    description: 'A comfortable test product with a long enough description.',
+    brand: 'TestBrand',
+    sku: `SKU-${Date.now()}-${productCounter}`,
+    price: 1000,
+    category: String(category),
+    stock: 20,
+    images: [fakeImage(`img-${productCounter}`)],
+    ...overrides,
+  };
+};
+
+/**
+ * Saves a product directly in the database (skips HTTP and its rules).
+ * Creates a category automatically when `category` is not given.
+ * Defaults: stock 20, price 1000, isActive true.
+ */
+export async function createProduct(overrides = {}) {
+  const category = overrides.category ?? (await createCategory())._id;
+  return Product.create({
+    ...validProduct(category),
+    category,
+    isActive: true,
+    // The creator must be an admin id; a fresh id is enough for most tests
+    createdBy: new mongoose.Types.ObjectId(),
+    ...overrides,
+  });
+}
 
 /** The supertest client for our app (no real network port needed). */
 export const api = () => request(app);

@@ -35,6 +35,9 @@ export const REGEX = Object.freeze({
   // Images must live on OUR Cloudinary account's CDN (https only). Branch 04 adds the real
   // upload endpoint; until then an admin stores an already-uploaded { url, publicId }.
   CLOUDINARY_URL: /^https:\/\/res\.cloudinary\.com\//,
+  // A product's SKU ("Stock Keeping Unit", the shop's own article number, e.g. "TSHIRT-BLK-M"):
+  // 3–30 capital letters, digits or dashes. Inputs are upper-cased first, so "tshirt-blk-m" is OK.
+  SKU: /^[A-Z0-9-]{3,30}$/,
 });
 
 // The provinces/territories a delivery address may be in. A fixed list (an "enum")
@@ -55,4 +58,13 @@ export const ADDRESS_LABELS = Object.freeze(['Home', 'Work', 'Other']);
 // Upper limits that protect the database (and the UI) from unbounded lists.
 export const LIMITS = Object.freeze({
   MAX_ADDRESSES: 5, // a customer may save at most 5 delivery addresses
+  MAX_PRODUCT_IMAGES: 5, // a product shows 1 to 5 pictures
+  MAX_SPECIFICATIONS: 20, // at most 20 "key: value" rows (e.g. "Material: Cotton") per product
+  STOCK_HISTORY_KEEP: 50, // a product remembers only its last 50 manual stock changes
+  LOW_STOCK_THRESHOLD: 5, // stock at or below this number shows up in the admin's low-stock list
+  MAX_IMAGE_BYTES: 2 * 1024 * 1024, // an uploaded image may be at most 2 MB
 });
+
+// The only file types the upload endpoint accepts (checked by their MIME type, the
+// "content type" label every uploaded file carries). No GIF/SVG: SVG files can contain scripts.
+export const IMAGE_MIME_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp']);

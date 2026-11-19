@@ -3,9 +3,6 @@ node_modules/
 
 # Environment variables
 # Real secrets live in .env files. Only the .env.example files are committed.
-.env.local
-.env
-.env.*
 !.env.example
 
 # Google OAuth credentials
@@ -19,6 +16,6 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
 
+config.bat

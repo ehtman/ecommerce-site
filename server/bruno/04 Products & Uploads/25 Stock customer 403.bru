@@ -1,0 +1,27 @@
+meta {
+  name: Stock – customer → 403
+  type: http
+  seq: 25
+}
+
+patch {
+  url: {{baseUrl}}/products/{{productId}}/stock
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+body:json {
+  {
+    "mode": "set",
+    "value": 1,
+    "reason": "Hacking"
+  }
+}
+
+tests {
+  test("status is 403", function () { expect(res.status).to.equal(403); });
+}
