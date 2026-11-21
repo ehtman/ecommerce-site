@@ -1,0 +1,27 @@
+meta {
+  name: Cart – add 1 product (Rs 2,000)
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {
+    "productId": "{{couponProductId}}",
+    "quantity": 1
+  }
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  test('subtotal is 2000', function () { expect(res.body.data.subtotal).to.eql(2000); });
+}

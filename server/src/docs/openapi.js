@@ -15,6 +15,10 @@ import addressDocs from '../modules/addresses/address.docs.js';
 import categoryDocs from '../modules/categories/category.docs.js';
 import productDocs from '../modules/products/product.docs.js';
 import uploadDocs from '../modules/uploads/upload.docs.js';
+import cartDocs from '../modules/cart/cart.docs.js';
+import wishlistDocs from '../modules/wishlist/wishlist.docs.js';
+import couponDocs from '../modules/coupons/coupon.docs.js';
+import orderDocs from '../modules/orders/order.docs.js';
 
 const spec = {
   openapi: '3.0.3',
@@ -160,6 +164,8 @@ const spec = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
+      // Order, OrderItem, ShippingAddress, OrderSummary (branch 07)
+      ...orderDocs.schemas,
       AuthResult: {
         type: 'object',
         properties: {
@@ -174,6 +180,7 @@ const spec = {
           },
         },
       },
+      ...couponDocs.schemas, // Coupon
       Message: {
         type: 'object',
         properties: {
@@ -215,6 +222,10 @@ const spec = {
     ...categoryDocs.tags,
     ...productDocs.tags,
     ...uploadDocs.tags,
+    ...cartDocs.tags,
+    ...wishlistDocs.tags,
+    ...couponDocs.tags,
+    ...orderDocs.tags,
   ],
   paths: {
     '/health': {
@@ -230,6 +241,10 @@ const spec = {
     ...categoryDocs.paths,
     ...productDocs.paths,
     ...uploadDocs.paths,
+    ...cartDocs.paths,
+    ...wishlistDocs.paths,
+    ...couponDocs.paths,
+    ...orderDocs.paths,
   },
 };
 

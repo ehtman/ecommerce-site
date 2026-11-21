@@ -1,0 +1,29 @@
+meta {
+  name: Cart – add 6 × A more → 400 (max 10)
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "{{productId}}",
+    "quantity": 6
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 400", function () { expect(status).to.eql(400); });
+  test("max 10 message", function () { expect(j.message).to.eql("You can buy at most 10 of one product"); });
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Wishlist – add inactive product → 404
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/wishlist/{{inactiveProductId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 404", function () { expect(status).to.eql(404); });
+}

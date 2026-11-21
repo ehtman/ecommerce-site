@@ -1,0 +1,27 @@
+meta {
+  name: Admin login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/auth/admin/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:pre-request {
+  // Folder 07 is self-contained: it logs the admin in and builds its own catalogue
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  bru.setEnvVar('orderAdminToken', res.body.data.token);
+}

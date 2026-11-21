@@ -1,0 +1,30 @@
+meta {
+  name: Cart – add 3 × A again (quantities add up)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "{{productId}}",
+    "quantity": 3
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("still one line", function () { expect(j.data.items.length).to.eql(1); });
+  test("quantity is 5", function () { expect(j.data.items[0].quantity).to.eql(5); });
+}

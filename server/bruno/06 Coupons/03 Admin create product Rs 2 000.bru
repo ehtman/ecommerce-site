@@ -1,0 +1,41 @@
+meta {
+  name: Admin – create product (Rs 2,000)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Coupon Test Kettle",
+    "description": "An electric kettle used to test coupons end to end.",
+    "sku": "{{couponSku}}",
+    "price": 2000,
+    "stock": 50,
+    "category": "{{couponCategoryId}}",
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+        "publicId": "sample"
+      }
+    ]
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar('couponSku', 'CPN-' + Date.now());
+}
+
+tests {
+  test('status is 201', function () { expect(res.status).to.eql(201); });
+  bru.setEnvVar('couponProductId', res.body.data._id);
+}

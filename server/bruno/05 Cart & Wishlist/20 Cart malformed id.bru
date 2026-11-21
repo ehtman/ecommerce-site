@@ -1,0 +1,27 @@
+meta {
+  name: Cart – malformed id → 400
+  type: http
+  seq: 20
+}
+
+put {
+  url: {{baseUrl}}/cart/items/abc
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "quantity": 1
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 400", function () { expect(status).to.eql(400); });
+}

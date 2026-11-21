@@ -1,0 +1,26 @@
+meta {
+  name: Customer cancels the confirmed order
+  type: http
+  seq: 24
+}
+
+patch {
+  url: {{baseUrl}}/orders/{{orderId}}/cancel
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "reason": "Ordered by mistake"
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('cancelled with reason', () => { expect(res.body.data.status).to.equal('cancelled'); expect(res.body.data.cancelReason).to.equal('Ordered by mistake'); });
+}

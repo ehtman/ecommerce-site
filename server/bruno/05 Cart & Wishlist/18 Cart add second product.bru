@@ -1,0 +1,32 @@
+meta {
+  name: Cart – add 2 × B (free shipping from Rs 5,000)
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "{{productId2}}",
+    "quantity": 2
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("two lines", function () { expect(j.data.items.length).to.eql(2); });
+  test("subtotal 2400 + 4000", function () { expect(j.data.subtotal).to.eql(6400); });
+  test("free shipping", function () { expect(j.data.shipping).to.eql(0); });
+  test("total", function () { expect(j.data.total).to.eql(6400); });
+}

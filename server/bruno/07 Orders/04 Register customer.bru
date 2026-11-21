@@ -1,0 +1,28 @@
+meta {
+  name: Register customer
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Order Tester",
+    "email": "{{orderEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar('orderEmail', 'orders' + Date.now() + '@example.com');
+}
+
+tests {
+  test('status is 201', () => expect(res.status).to.equal(201));
+  bru.setEnvVar('orderToken', res.body.data.token);
+}

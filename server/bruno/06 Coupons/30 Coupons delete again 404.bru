@@ -1,0 +1,19 @@
+meta {
+  name: Coupons – delete again → 404
+  type: http
+  seq: 30
+}
+
+delete {
+  url: {{baseUrl}}/coupons/{{couponId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test('status is 404', function () { expect(res.status).to.eql(404); });
+}

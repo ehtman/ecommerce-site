@@ -1,0 +1,21 @@
+meta {
+  name: Wishlist – malformed id → 400
+  type: http
+  seq: 29
+}
+
+post {
+  url: {{baseUrl}}/wishlist/abc
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 400", function () { expect(status).to.eql(400); });
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Admin → shipped with tracking
+  type: http
+  seq: 33
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId2}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "shipped",
+    "trackingNumber": "TCS123456"
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('tracking saved', () => expect(res.body.data.trackingNumber).to.equal('TCS123456'));
+}

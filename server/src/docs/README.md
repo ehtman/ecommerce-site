@@ -1,8 +1,8 @@
 # src/docs/: OpenAPI (Swagger) spec
 
-| File         | What it does                                                                                                                                                                                                                                                                                 |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `openapi.js` | The full OpenAPI 3 spec: info, `bearerAuth` security scheme, shared schemas (`Error`, `User`, `Address`, `Image`, `Category`, `PageMeta`, `Product`, `AuthResult`, `Message`), shared error responses (incl. `NotFound`), the `/health` path, and every module's `tags` + `paths` merged in. |
+| File         | What it does                                                                                                                                                                                                                                                                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openapi.js` | The full OpenAPI 3 spec: info, `bearerAuth` security scheme, shared schemas (`Error`, `User`, `Address`, `Image`, `Category`, `PageMeta`, `Product`, `AuthResult`, `Message`, plus `Coupon` from `coupon.docs.js`), shared error responses (incl. `NotFound`), the `/health` path, and every module's `tags` + `paths` merged in. |
 
 Served by `app.js`:
 

@@ -1,0 +1,17 @@
+meta {
+  name: Cart – no token → 401
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/cart
+  body: none
+  auth: none
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 401", function () { expect(status).to.eql(401); });
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Cart – add inactive product → 404
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "{{inactiveProductId}}",
+    "quantity": 1
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 404", function () { expect(status).to.eql(404); });
+}

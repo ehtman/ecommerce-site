@@ -1,0 +1,25 @@
+meta {
+  name: Admin cannot place orders → 403
+  type: http
+  seq: 37
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "addressId": "{{orderAddressId}}"
+  }
+}
+
+tests {
+  test('status is 403', () => expect(res.status).to.equal(403));
+}

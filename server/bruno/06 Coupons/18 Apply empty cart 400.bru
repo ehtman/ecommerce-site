@@ -1,0 +1,26 @@
+meta {
+  name: Apply – empty cart → 400
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCode}}"
+  }
+}
+
+tests {
+  test('status is 400', function () { expect(res.status).to.eql(400); });
+  test('says the cart is empty', function () { expect(res.body.message).to.eql('Your cart is empty'); });
+}

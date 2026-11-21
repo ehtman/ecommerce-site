@@ -1,0 +1,24 @@
+meta {
+  name: Mailpit – find verification email
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/search?query=to:{{orderEmail}}
+  body: none
+  auth: none
+}
+
+docs {
+  Searches Mailpit for emails sent to OUR customer (safe when other runs share Mailpit) and keeps the newest id.
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  const found = res.body.messages || [];
+  test('an email was sent to our customer', () => expect(found.length).to.be.above(0));
+  // Newest first by creation time
+  const newest = found.slice().sort((a, b) => new Date(b.Created) - new Date(a.Created))[0];
+  bru.setEnvVar('orderMailId', newest.ID);
+}

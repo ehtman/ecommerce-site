@@ -1,0 +1,20 @@
+meta {
+  name: Cart is empty after checkout
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/cart
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('no items left', () => expect(res.body.data.items.length).to.equal(0));
+}

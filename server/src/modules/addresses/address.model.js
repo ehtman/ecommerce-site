@@ -103,6 +103,15 @@ addressSchema.index(
   },
 );
 
+/* ---------- Methods ---------- */
+// Branch 07: the plain COPY of this address that an order stores (a "snapshot").
+// Only delivery fields are copied: no _id, owner, label or isDefault. Later edits to this
+// address never change an order that was already placed.
+addressSchema.methods.toSnapshot = function toSnapshot() {
+  const { fullName, phone, addressLine1, addressLine2, city, province, postalCode, country } = this;
+  return { fullName, phone, addressLine1, addressLine2, city, province, postalCode, country };
+};
+
 // Clean JSON output (no __v, no duplicate `id`)
 addressSchema.plugin(toJSON);
 

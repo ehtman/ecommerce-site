@@ -6,8 +6,9 @@
  * database, and either returns a result or throws an ApiError. That makes it reusable
  * (from a script, a test, another service) and easy to test.
  */
+import mongoose from 'mongoose';
 import env from '../../config/env.js';
-import { User } from '../models.js';
+import { User, Cart, Wishlist } from '../models.js';
 import ApiError from '../../utils/ApiError.js';
 import sendEmail from '../../emails/sendEmail.js';
 import {
@@ -17,13 +18,34 @@ import {
 } from '../../emails/templates.js';
 import { googleVerifier } from './google.verifier.js';
 
-// Creates and saves a user. For email+password accounts it also creates the
-// email-verification token and returns it, so the caller can email it.
-async function createUser(data) {
-  const user = new User(data);
+/**
+ * Creates a new customer TOGETHER WITH an empty cart and an empty wishlist.
+ * For email+password accounts it also creates the email-verification token and returns
+ * it, so the caller can email it.
+ *
+ * WHY A TRANSACTION? These are THREE writes to three collections. Without a transaction a
+ * crash after the first write would leave a user WITHOUT a cart (a half-finished account).
+ * A transaction makes the three writes ATOMIC ("all or nothing"): either every document is
+ * saved, or – if anything throws – MongoDB rolls back (undoes) the ones already written,
+ * as if nothing had happened. Transactions need a replica set (Atlas and our test database
+ * are one). See docs/concepts/18-transactions-and-atomic-updates.md.
+ */
+async function createUserWithCartAndWishlist(data) {
+  let user;
   let verifyToken = null;
-  if (user.authProvider === 'local') verifyToken = user.createEmailVerifyToken();
-  await user.save(); // the pre-save hook hashes the password here
+  // connection.transaction() starts a session, runs our function, COMMITS if it finishes
+  // and ABORTS (rolls back) if it throws. It may retry the function on temporary write
+  // conflicts, which is why everything is built INSIDE the function.
+  await mongoose.connection.transaction(async (session) => {
+    user = new User(data);
+    verifyToken = user.authProvider === 'local' ? user.createEmailVerifyToken() : null;
+    // `{ session }` = "this write belongs to the transaction". Forgetting it would make the
+    // write happen OUTSIDE the transaction, so it would NOT be rolled back.
+    await user.save({ session }); // the pre-save hook hashes the password here
+    // Model.create([docs], { session }) – the array form is required when passing options
+    await Cart.create([{ user: user._id, items: [] }], { session });
+    await Wishlist.create([{ user: user._id, products: [] }], { session });
+  });
   return { user, verifyToken };
 }
 
@@ -37,7 +59,12 @@ export async function registerUser({ name, email, password }) {
   }
   // We pick ONLY the fields we expect and force role 'customer'. Whatever else the
   // client sends (role: 'admin', isEmailVerified: true…) is ignored.
-  const { user, verifyToken } = await createUser({ name, email, password, role: 'customer' });
+  const { user, verifyToken } = await createUserWithCartAndWishlist({
+    name,
+    email,
+    password,
+    role: 'customer',
+  });
 
   // Email AFTER the database work succeeded (no email for a user that was never saved)
   await sendEmail({ to: user.email, ...verifyEmailTemplate(user.name, verifyToken) });
@@ -138,9 +165,10 @@ export async function googleLogin(credential) {
       await user.save({ validateModifiedOnly: true });
     }
   }
-  //    c) nobody → create a new customer account (no password needed)
+  //    c) nobody → create a new customer account (no password needed), with its cart
+  //       and wishlist, in the same all-or-nothing transaction as email sign-up
   if (!user) {
-    ({ user } = await createUser({
+    ({ user } = await createUserWithCartAndWishlist({
       name: (payload.name || email.split('@')[0]).slice(0, 50), // fit the 50-char limit
       email,
       googleId: payload.sub,

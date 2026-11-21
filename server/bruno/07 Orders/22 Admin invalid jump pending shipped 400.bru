@@ -1,0 +1,27 @@
+meta {
+  name: Admin invalid jump pending → shipped → 400
+  type: http
+  seq: 22
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "shipped",
+    "trackingNumber": "TCS123"
+  }
+}
+
+tests {
+  test('status is 400', () => expect(res.status).to.equal(400));
+  test('explains the rule', () => expect(res.body.message).to.equal('Cannot change status from pending to shipped'));
+}

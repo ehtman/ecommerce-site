@@ -1,0 +1,22 @@
+meta {
+  name: Wishlist – get (empty)
+  type: http
+  seq: 25
+}
+
+get {
+  url: {{baseUrl}}/wishlist
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("no products", function () { expect(j.data.items.length).to.eql(0); });
+}

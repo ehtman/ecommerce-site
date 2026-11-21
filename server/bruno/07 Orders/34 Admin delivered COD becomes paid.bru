@@ -1,0 +1,26 @@
+meta {
+  name: Admin → delivered (COD becomes paid)
+  type: http
+  seq: 34
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId2}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "delivered"
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('delivered and paid', () => { expect(res.body.data.status).to.equal('delivered'); expect(res.body.data.paymentStatus).to.equal('paid'); });
+}

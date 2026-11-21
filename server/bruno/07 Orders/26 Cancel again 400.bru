@@ -1,0 +1,23 @@
+meta {
+  name: Cancel again → 400
+  type: http
+  seq: 26
+}
+
+patch {
+  url: {{baseUrl}}/orders/{{orderId}}/cancel
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test('status is 400', () => expect(res.status).to.equal(400));
+}

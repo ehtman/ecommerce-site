@@ -1,0 +1,31 @@
+meta {
+  name: Coupons – deactivate the second coupon (PUT)
+  type: http
+  seq: 10
+}
+
+put {
+  url: {{baseUrl}}/coupons/{{couponId2}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCode2}}",
+    "type": "fixed",
+    "value": 300,
+    "usageLimit": 1,
+    "expiresAt": "2030-12-31T23:59:59Z",
+    "isActive": false
+  }
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  test('now disabled', function () { expect(res.body.data.state).to.eql('disabled'); });
+}

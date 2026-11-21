@@ -1,0 +1,20 @@
+meta {
+  name: Coupons – get one (admin)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/coupons/{{couponId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  test('is the right coupon', function () { expect(res.body.data.code).to.eql(bru.getEnvVar('couponCode')); });
+}

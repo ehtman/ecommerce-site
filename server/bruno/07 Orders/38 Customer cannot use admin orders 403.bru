@@ -1,0 +1,19 @@
+meta {
+  name: Customer cannot use admin orders → 403
+  type: http
+  seq: 38
+}
+
+get {
+  url: {{baseUrl}}/admin/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+tests {
+  test('status is 403', () => expect(res.status).to.equal(403));
+}

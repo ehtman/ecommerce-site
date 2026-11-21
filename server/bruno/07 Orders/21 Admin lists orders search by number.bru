@@ -1,0 +1,20 @@
+meta {
+  name: Admin lists orders (search by number)
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{baseUrl}}/admin/orders?search={{orderNumber}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('finds exactly our order', () => expect(res.body.data.map((o) => o._id)).to.eql([bru.getEnvVar('orderId')]));
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Wishlist – add A
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/wishlist/{{productId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("one product", function () { expect(j.data.productIds.length).to.eql(1); });
+  test("it is A", function () { expect(j.data.productIds[0] === bru.getEnvVar('productId')).to.eql(true); });
+}
