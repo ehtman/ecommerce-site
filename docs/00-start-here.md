@@ -60,3 +60,9 @@ Then read any **concept** doc that is new to you (links in the root [README](../
 ## Words you don't know?
 
 See the [glossary](concepts/glossary.md).
+
+## Learn testing properly
+
+New to testing? Read the **[Testing handbook](testing-handbook/README.md)**: what unit, integration and API
+tests are, how every tool in this repo is set up, how to add the same setup to your own projects, and a
+practice roadmap to grow your backend engineering skills.

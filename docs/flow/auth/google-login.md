@@ -1,59 +1,60 @@
-# Google login – `POST /api/auth/google`
+# Google sign-in / sign-up – `POST /api/auth/google`
 
-Signs a customer in (or signs them up) with the ID token from Google's sign-in button: verifies it with Google, then finds, links or creates the user and returns a JWT. Public (rate limited); admins are refused.
+Public sign-in with a Google ID token. Finds the user by Google id, links an existing email account, or creates a new customer; since branch 05 a new Google customer is created together with an empty cart and wishlist in ONE MongoDB transaction. Admins are refused.
 
 ```mermaid
 flowchart TD
     A[Client] -->|POST /api/auth/google| B[Express app<br/>app.js]
-    B --> C["Global middleware<br/>helmet, cors, express.json, urlencoded, mongoSanitize, morgan"]
-    C --> L0{"apiLimiter<br/>rateLimit.middleware.js<br/>under 300 per 15 min?"}
-    L0 -->|No| RL["429 Too many attempts, try again later<br/>sent by express-rate-limit"]
-    L0 -->|Yes| RT["auth.routes.js<br/>router.post google"]
-    RT --> L1{"authLimiter<br/>under 10 per 15 min?"}
-    L1 -->|No| RL
-    L1 -->|Yes| V{"validate googleRules<br/>auth.validation.js<br/>credential non-empty string?"}
-    V -->|No| E1["ApiError 400<br/>Validation failed + field errors"]
-    V -->|Yes| CT["googleLogin<br/>auth.controller.js via asyncHandler"]
-    CT --> S1["googleLogin credential<br/>auth.service.js"]
-    S1 --> D0{"env.GOOGLE_CLIENT_ID set?"}
-    D0 -->|No| E2["ApiError 500<br/>Google login is not configured"]
-    D0 -->|Yes| G["googleVerifier.verify<br/>google.verifier.js<br/>OAuth2Client.verifyIdToken, audience GOOGLE_CLIENT_ID"]
-    G --> GX[Google auth library<br/>checks signature with Google public keys]
-    GX --> D1{"Token valid?"}
-    D1 -->|No, throws| E3["ApiError 401<br/>Invalid Google credential"]
-    D1 -->|Yes| D2{"payload.email_verified?"}
-    D2 -->|No| E4["ApiError 401<br/>Google email is not verified"]
-    D2 -->|Yes| DB1["email = payload.email lowercased<br/>User.findOne googleId = payload.sub"]
-    DB1 --> D3{"Linked user found?"}
-    D3 -->|Yes| D7
-    D3 -->|No| DB2["User.findOne email"]
-    DB2 --> D4{"Same email user found?"}
-    D4 -->|Yes| D5{"user.role is admin?"}
-    D5 -->|Yes| E5["ApiError 403<br/>Admins must log in with email and password"]
-    D5 -->|No| DB3["Link account<br/>user.googleId = sub, isEmailVerified = true<br/>user.save validateModifiedOnly"]
-    DB3 --> D7
-    D4 -->|No| DB4["createUser<br/>name from payload.name or email prefix, max 50<br/>authProvider google, googleId sub"]
-    DB4 --> DB5["user.save<br/>pre-validate hook sets isEmailVerified true<br/>no password, no verify token"]
-    DB5 --> D6{"Duplicate key 11000?"}
-    D6 -->|Yes| E6["MongoServerError 11000<br/>mapped to 409 field already exists"]
-    D6 -->|No| D7{"user.role is admin?"}
-    D7 -->|Yes| E7["ApiError 403<br/>Admins must log in with email and password"]
-    D7 -->|No| D8{"user.isActive?"}
-    D8 -->|No| E8["ApiError 403<br/>Your account has been disabled"]
-    D8 -->|Yes| DB6["user.lastLoginAt = now<br/>user.save validateModifiedOnly"]
-    DB6 --> T["withToken: generateToken user<br/>utils/generateToken.js<br/>JWT id, role, v"]
-    T --> OK["sendSuccess 200<br/>Login successful<br/>token + user"]
-    OK --> R[Client]
-    E1 --> EH[errorHandler<br/>error.middleware.js]
+    B --> C[Global middleware<br/>helmet, cors, json, urlencoded, mongoSanitize, morgan]
+    C --> RL{"apiLimiter 300 / 15 min or<br/>authLimiter 10 / 15 min exceeded?"}
+    RL -->|Yes| E429["429 Too many attempts<br/>express-rate-limit answers directly"]
+    E429 --> R[Client]
+    RL -->|No| V{"validate googleRules<br/>credential non-empty string"}
+    V -->|No| EV["ApiError 400<br/>Validation failed"]
+    V -->|Yes| CT["auth.controller.js googleLogin"]
+    CT --> S0{"authService.googleLogin<br/>env.GOOGLE_CLIENT_ID set?"}
+    S0 -->|No| E0["ApiError 500<br/>Google login is not configured"]
+    S0 -->|Yes| GV["googleVerifier.verify credential<br/>google.verifier.js<br/>OAuth2Client.verifyIdToken audience GOOGLE_CLIENT_ID"]
+    GV --> GOK{"Google accepts token?"}
+    GOK -->|No| E1["ApiError 401<br/>Invalid Google credential"]
+    GOK -->|Yes| EVF{"payload.email_verified?"}
+    EVF -->|No| E2["ApiError 401<br/>Google email is not verified"]
+    EVF -->|Yes| F1["User.findOne googleId = payload.sub"]
+    F1 --> D1{"Linked user found?"}
+    D1 -->|Yes| CHK
+    D1 -->|No| F2["User.findOne email lowercased"]
+    F2 --> D2{"User with same email?"}
+    D2 -->|Yes| D3{"role is admin?"}
+    D3 -->|Yes| E3["ApiError 403<br/>Admins must log in with email and password"]
+    D3 -->|No| LK["Link: user.googleId = sub, isEmailVerified true<br/>user.save validateModifiedOnly"]
+    LK --> CHK
+    D2 -->|No| TX
+    TX["createUserWithCartAndWishlist<br/>mongoose.connection.transaction session"]
+    TX --> T1["new User data<br/>name, email, googleId, authProvider google, avatar<br/>no verify token for google"]
+    T1 --> T2["user.save session<br/>pre-validate hook sets isEmailVerified, no password to hash"]
+    T2 --> T3["Cart.create user, items empty, session"]
+    T3 --> T4["Wishlist.create user, products empty, session"]
+    T4 --> TOK{"All three writes OK?"}
+    TOK -->|No| TAB["Transaction ABORTED<br/>all writes rolled back"]
+    TAB --> ETX["Error rethrown<br/>ValidationError 400 / duplicate key 11000 409"]
+    TOK -->|Yes| TCM["Transaction COMMITTED<br/>user + cart + wishlist saved together"]
+    TCM --> CHK{"user.role is admin?"}
+    CHK -->|Yes| E4["ApiError 403<br/>Admins must log in with email and password"]
+    CHK -->|No| ACT{"user.isActive?"}
+    ACT -->|No| E5["ApiError 403<br/>Your account has been disabled"]
+    ACT -->|Yes| LL["user.lastLoginAt = now<br/>user.save validateModifiedOnly"]
+    LL --> GT["generateToken user<br/>withToken"]
+    GT --> S["sendSuccess 200 Login successful<br/>token + user"]
+    S --> R
+    EV --> EH
+    E0 --> EH
+    E1 --> EH
     E2 --> EH
     E3 --> EH
+    ETX --> EH
     E4 --> EH
     E5 --> EH
-    E6 --> EH
-    E7 --> EH
-    E8 --> EH
-    EH --> R
-    RL --> R
+    EH["errorHandler<br/>error.middleware.js<br/>status + success false JSON"] --> R
 ```
 
-**Files involved:** `server/src/app.js` (global middleware, mounts `/api/auth`), `server/src/middleware/rateLimit.middleware.js` (apiLimiter, authLimiter), `server/src/modules/auth/auth.routes.js` (route pipeline), `server/src/middleware/validate.middleware.js` (runs rules), `server/src/modules/auth/auth.validation.js` (googleRules), `server/src/modules/auth/auth.controller.js` (googleLogin), `server/src/modules/auth/auth.service.js` (googleLogin, createUser), `server/src/modules/auth/google.verifier.js` (Google ID token check via google-auth-library), `server/src/modules/users/user.model.js` (pre-validate googleVerified hook), `server/src/config/env.js` (GOOGLE_CLIENT_ID), `server/src/utils/generateToken.js` (JWT), `server/src/utils/ApiResponse.js` (sendSuccess), `server/src/utils/ApiError.js`, `server/src/middleware/error.middleware.js` (error JSON; 500 message hidden in production).
+**Files involved:** `server/src/app.js` (mounts /api/auth, apiLimiter), `server/src/modules/auth/auth.routes.js` (authLimiter, validate), `server/src/middleware/rateLimit.middleware.js` (authLimiter), `server/src/modules/auth/auth.validation.js` (googleRules), `server/src/modules/auth/auth.controller.js` (googleLogin, withToken), `server/src/modules/auth/auth.service.js` (googleLogin, createUserWithCartAndWishlist transaction), `server/src/modules/auth/google.verifier.js` (Google OAuth2Client), `server/src/modules/users/user.model.js` (User, googleVerified pre-validate hook), `server/src/modules/cart/cart.model.js` (Cart), `server/src/modules/wishlist/wishlist.model.js` (Wishlist), `server/src/utils/generateToken.js` (JWT), `server/src/middleware/error.middleware.js` (errorHandler)

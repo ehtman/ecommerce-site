@@ -5,7 +5,7 @@ passes through: middleware, validation, controller, service, database, emails, e
 every error exit (`ApiError` → `errorHandler`) and the final response.
 
 Diagrams are Mermaid: GitHub and VS Code (with a Mermaid preview extension) draw them automatically.
-This index grows with every branch. It lists the flows that exist up to **03-categories**.
+This index grows with every branch. It lists the flows that exist up to **07-orders**.
 
 | Module | Endpoint / action | Flow |
 |---|---|---|
@@ -33,3 +33,33 @@ This index grows with every branch. It lists the flows that exist up to **03-cat
 | categories | POST /api/categories | [create-category](categories/create-category.md) |
 | categories | PUT /api/categories/:id | [update-category](categories/update-category.md) |
 | categories | DELETE /api/categories/:id | [delete-category](categories/delete-category.md) |
+| products | GET /api/products | [list-products](products/list-products.md) |
+| products | GET /api/products/brands | [list-brands](products/list-brands.md) |
+| products | GET /api/products/:slug | [get-product-by-slug](products/get-product-by-slug.md) |
+| products | POST /api/products | [create-product](products/create-product.md) |
+| products | PUT /api/products/:id | [update-product](products/update-product.md) |
+| products | DELETE /api/products/:id | [delete-product](products/delete-product.md) |
+| products | DELETE /api/products/:id/images/:imageId | [remove-product-image](products/remove-product-image.md) |
+| products | PATCH /api/products/:id/stock | [update-product-stock](products/update-product-stock.md) |
+| uploads | POST /api/uploads/image | [upload-image](uploads/upload-image.md) |
+| uploads | DELETE /api/uploads/image | [delete-uploaded-image](uploads/delete-uploaded-image.md) |
+| cart | GET /api/cart | [get-cart](cart/get-cart.md) |
+| cart | POST /api/cart/items | [add-cart-item](cart/add-cart-item.md) |
+| cart | PUT /api/cart/items/:productId | [update-cart-item](cart/update-cart-item.md) |
+| cart | DELETE /api/cart/items/:productId | [remove-cart-item](cart/remove-cart-item.md) |
+| cart | DELETE /api/cart | [clear-cart](cart/clear-cart.md) |
+| wishlist | GET /api/wishlist | [get-wishlist](wishlist/get-wishlist.md) |
+| wishlist | POST /api/wishlist/:productId | [add-to-wishlist](wishlist/add-to-wishlist.md) |
+| wishlist | DELETE /api/wishlist/:productId | [remove-from-wishlist](wishlist/remove-from-wishlist.md) |
+| coupons | POST /api/coupons/validate | [validate-coupon](coupons/validate-coupon.md) |
+| coupons | GET /api/coupons | [list-coupons](coupons/list-coupons.md) |
+| coupons | GET /api/coupons/:id | [get-coupon](coupons/get-coupon.md) |
+| coupons | POST /api/coupons | [create-coupon](coupons/create-coupon.md) |
+| coupons | PUT /api/coupons/:id | [update-coupon](coupons/update-coupon.md) |
+| coupons | DELETE /api/coupons/:id | [delete-coupon](coupons/delete-coupon.md) |
+| orders | POST /api/orders | [place-order](orders/place-order.md) |
+| orders | GET /api/orders/my | [list-my-orders](orders/list-my-orders.md) |
+| orders | GET /api/orders/:id | [get-order](orders/get-order.md) |
+| orders | PATCH /api/orders/:id/cancel | [cancel-order](orders/cancel-order.md) |
+| orders | GET /api/admin/orders | [admin-list-orders](orders/admin-list-orders.md) |
+| orders | PATCH /api/admin/orders/:id/status | [admin-update-order-status](orders/admin-update-order-status.md) |
