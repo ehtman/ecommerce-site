@@ -1,36 +1,38 @@
-# Register – `POST /api/auth/register`
+# Register customer – `POST /api/auth/register`
 
-Creates a new customer account with name, email and password, emails a verification link and returns a login token. Public: anyone may call it (rate limited).
+Public sign-up with name, email and password. Always creates a `customer`, and since branch 05 creates the user, an empty cart and an empty wishlist in ONE MongoDB transaction (all or nothing), then emails a verification link.
 
 ```mermaid
 flowchart TD
     A[Client] -->|POST /api/auth/register| B[Express app<br/>app.js]
-    B --> C["Global middleware<br/>helmet, cors, express.json, urlencoded, mongoSanitize, morgan"]
-    C --> L0{"apiLimiter<br/>rateLimit.middleware.js<br/>under 300 per 15 min?"}
-    L0 -->|No| RL["429 Too many attempts, try again later<br/>sent by express-rate-limit"]
-    L0 -->|Yes| RT["auth.routes.js<br/>router.post register"]
-    RT --> L1{"authLimiter<br/>under 10 per 15 min?"}
-    L1 -->|No| RL
-    L1 -->|Yes| V{"validate registerRules<br/>validate.middleware.js + auth.validation.js<br/>name 2-50, email valid, password 8-64 with letter and digit?"}
-    V -->|No| E1["ApiError 400<br/>Validation failed + field errors"]
-    V -->|Yes| CT["register<br/>auth.controller.js via asyncHandler"]
-    CT --> S1["registerUser name, email, password<br/>auth.service.js"]
-    S1 --> D1{"User.exists email<br/>already registered?"}
-    D1 -->|Yes| E2["ApiError 409<br/>Email already registered"]
-    D1 -->|No| S2["createUser<br/>new User with role customer<br/>other body fields ignored"]
-    S2 --> S3["user.createEmailVerifyToken<br/>user.model.js<br/>stores sha256 hash + 24h expiry"]
-    S3 --> S4["user.save<br/>pre-save hook bcrypt.hash password"]
-    S4 --> D2{"Duplicate key 11000<br/>email raced in?"}
-    D2 -->|Yes| E3["MongoServerError 11000<br/>mapped to 409 email already exists"]
-    D2 -->|No| M["sendEmail + verifyEmailTemplate<br/>link FRONTEND_URL/verify-email?token=...<br/>see emails/send-email.md"]
-    M --> T["withToken: generateToken user<br/>utils/generateToken.js<br/>JWT id, role, v"]
-    T --> OK["sendSuccess 201<br/>Registration successful, check your email<br/>token + user, secrets hidden by toJSON"]
-    OK --> R[Client]
-    E1 --> EH[errorHandler<br/>error.middleware.js]
-    E2 --> EH
-    E3 --> EH
-    EH --> R
-    RL --> R
+    B --> C[Global middleware<br/>helmet, cors, json, urlencoded, mongoSanitize, morgan]
+    C --> RL{"apiLimiter 300 / 15 min or<br/>authLimiter 10 / 15 min exceeded?"}
+    RL -->|Yes| E429["429 Too many attempts<br/>express-rate-limit answers directly"]
+    E429 --> R[Client]
+    RL -->|No| V{"validate registerRules<br/>name 2-50, email, password 8-64 letter + digit"}
+    V -->|No| EV["ApiError 400<br/>Validation failed + field errors"]
+    V -->|Yes| CT["auth.controller.js register"]
+    CT --> S1["authService.registerUser<br/>User.exists email"]
+    S1 --> D1{"Email already registered?"}
+    D1 -->|Yes| E1["ApiError 409<br/>Email already registered"]
+    D1 -->|No| TX
+    TX["createUserWithCartAndWishlist<br/>mongoose.connection.transaction session"]
+    TX --> T1["new User data<br/>user.createEmailVerifyToken if authProvider local"]
+    T1 --> T2["user.save session<br/>pre-save hook hashes password"]
+    T2 --> T3["Cart.create user, items empty, session"]
+    T3 --> T4["Wishlist.create user, products empty, session"]
+    T4 --> TOK{"All three writes OK?"}
+    TOK -->|No| TAB["Transaction ABORTED<br/>all writes rolled back"]
+    TAB --> ETX["Error rethrown<br/>ValidationError 400 / duplicate key 11000 409"]
+    TOK -->|Yes| TCM["Transaction COMMITTED<br/>user + cart + wishlist saved together"]
+    TCM --> M["sendEmail to user.email<br/>verifyEmailTemplate name, verifyToken"]
+    M --> GT["generateToken user<br/>withToken"]
+    GT --> S["sendSuccess 201<br/>Registration successful, check your email<br/>token + user"]
+    S --> R
+    EV --> EH
+    E1 --> EH
+    ETX --> EH
+    EH["errorHandler<br/>error.middleware.js<br/>status + success false JSON"] --> R
 ```
 
-**Files involved:** `server/src/app.js` (global middleware, mounts `/api/auth`), `server/src/middleware/rateLimit.middleware.js` (apiLimiter, authLimiter), `server/src/modules/auth/auth.routes.js` (route pipeline), `server/src/middleware/validate.middleware.js` (runs rules), `server/src/modules/auth/auth.validation.js` (registerRules, passwordRule), `server/src/modules/auth/auth.controller.js` (register, withToken), `server/src/modules/auth/auth.service.js` (registerUser, createUser), `server/src/modules/users/user.model.js` (createEmailVerifyToken, pre-save hash), `server/src/emails/sendEmail.js` + `server/src/emails/templates.js` (verification email), `server/src/utils/generateToken.js` (JWT), `server/src/utils/ApiResponse.js` (sendSuccess), `server/src/utils/ApiError.js`, `server/src/middleware/error.middleware.js` (error JSON, 11000 to 409).
+**Files involved:** `server/src/app.js` (mounts /api/auth, apiLimiter), `server/src/modules/auth/auth.routes.js` (authLimiter, validate), `server/src/middleware/rateLimit.middleware.js` (authLimiter), `server/src/middleware/validate.middleware.js` (validate), `server/src/modules/auth/auth.validation.js` (registerRules), `server/src/modules/auth/auth.controller.js` (register, withToken), `server/src/modules/auth/auth.service.js` (registerUser, createUserWithCartAndWishlist transaction), `server/src/modules/users/user.model.js` (password hash hook, createEmailVerifyToken), `server/src/modules/cart/cart.model.js` (Cart), `server/src/modules/wishlist/wishlist.model.js` (Wishlist), `server/src/emails/sendEmail.js` + `server/src/emails/templates.js` (verifyEmailTemplate), `server/src/utils/generateToken.js` (JWT), `server/src/middleware/error.middleware.js` (errorHandler)

@@ -59,6 +59,8 @@ The table shows, per file, how much ran:
 - **% Funcs**: functions called
 - **Uncovered Line #s**: lines never executed. Look there first.
 
+**Testing concurrency:** `tests/integration/orders.transaction.test.js` fires parallel requests with `Promise.all` (two buyers for the last unit, a coupon with one use left, a double click, a double cancel) against the in-memory replica set, and forces failures mid-transaction to prove the rollback. See [concept 20](../concepts/20-transactions-and-race-conditions.md).
+
 HTML report: `server/coverage/lcov-report/index.html`. The run fails if global coverage is below 90% lines/statements/functions or 80% branches.
 
 ## 3. Writing a new test (template)
@@ -106,7 +108,7 @@ For routes with an `:id` that belongs to a user (branch 02 onwards), also test *
    - `ShopEase.postman_collection.json`
    - `ShopEase.local.postman_environment.json`
 2. Top right: choose the environment **"ShopEase – local"**.
-3. Open the collection → **Run** (Collection Runner) → **Run ShopEase API**. You can also run one folder (**01 Auth**, **02 Profile & Addresses**); each one is self-contained.
+3. Open the collection → **Run** (Collection Runner) → **Run ShopEase API**. You can also run one folder (**01 Auth**, **02 Profile & Addresses**, **03 Categories**, **04 Products & Uploads**, **05 Cart & Wishlist**, **06 Coupons**, **07 Orders**); each one is self-contained.
 4. Each request has a **Tests** tab with the assertions (status codes, saved variables).
 
 ### From the terminal (Newman)
@@ -122,7 +124,7 @@ The requests named **"Mailpit – read … email"** call Mailpit's API: `GET {{m
 
 The next request uses `{{verifyToken}}`. This makes the **whole email flow automatic**.
 
-Other variables are set the same way: `email` (random per run), `token`, `oldToken`, `adminToken`, `resetToken`. Folder 02 uses its own: `customerEmail`, `customerToken`, `otherEmail`, `otherToken`, `addressId`, `addressId2`.
+Other variables are set the same way: `email` (random per run), `token`, `oldToken`, `adminToken`, `resetToken`. Folder 02 uses its own: `customerEmail`, `customerToken`, `otherEmail`, `otherToken`, `addressId`, `addressId2`. Folder 03 uses `categoryName`, `categoryNameUpper`, `categoryId`, `categorySlug`, `oldCategorySlug`, `childCategoryId` and needs no email (the register response already holds a token for its 403 checks). Folder 04 uses `productRunId`, `categoryId`, `categorySlug`, `productId`, `productSlug`, `product2Id`, `inactiveId`, `inactiveSlug`, `imageId`, `image2Id`, also needs no email and no Cloudinary keys, and deletes everything it created. Folder 05 uses `cartEmail`, `cartToken`, `mailId`, `cartCategoryName`, `cartSkuA`/`B`/`C`, `categoryId`, `productId`, `productId2`, `inactiveProductId`, and reads its email via Mailpit search by recipient (newest message), not `latest`. Folder 06 does the same with `couponEmail`, `couponToken`, `couponMailId`, `couponCategoryName`, `couponCategoryId`, `couponSku`, `couponProductId`, `couponCode`, `couponCodeLower`, `couponId`, `couponCode2`, `couponId2`. Folder 07 uses variables starting with `order` (e.g. `orderEmail`, `orderToken`, `orderId`, `orderNumber`) and also reads Mailpit by recipient.
 
 Folder 02's request **"Addresses – fill up to 5"** shows another trick: its pre-request script calls `pm.sendRequest(...)` twice to create the 3rd and 4th addresses, so the next request can prove the 6th is refused.
 
