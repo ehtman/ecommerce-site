@@ -1,0 +1,21 @@
+meta {
+  name: Coupons – list (admin)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/coupons
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  const found = res.body.data.find(function (c) { return c._id === bru.getEnvVar('couponId'); });
+  test('contains the new coupon with its state', function () { expect(found.state).to.eql('active'); });
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Cart – add 4 × B → 400 (only 3 in stock)
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "{{productId2}}",
+    "quantity": 4
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 400", function () { expect(status).to.eql(400); });
+  test("stock message", function () { expect(j.message.startsWith('Only 3 of')).to.eql(true); });
+}

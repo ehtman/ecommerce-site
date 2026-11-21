@@ -38,6 +38,10 @@ export const REGEX = Object.freeze({
   // A product's SKU ("Stock Keeping Unit", the shop's own article number, e.g. "TSHIRT-BLK-M"):
   // 3–30 capital letters, digits or dashes. Inputs are upper-cased first, so "tshirt-blk-m" is OK.
   SKU: /^[A-Z0-9-]{3,30}$/,
+  // A coupon code: 3–20 CAPITAL letters or digits, e.g. EID25 or WELCOME500. No spaces or
+  // symbols, so a code is easy to read aloud, type on a phone and print on a flyer.
+  // Codes are stored in UPPERCASE, so customers may type "eid25" and still match.
+  COUPON_CODE: /^[A-Z0-9]{3,20}$/,
 });
 
 // The provinces/territories a delivery address may be in. A fixed list (an "enum")
@@ -55,6 +59,11 @@ export const PROVINCES = Object.freeze([
 // The small tag a customer puts on an address so they can recognise it in a list.
 export const ADDRESS_LABELS = Object.freeze(['Home', 'Work', 'Other']);
 
+// The two kinds of coupon (branch 06):
+//   percentage → `value` is a percent of the items subtotal, e.g. 10 = 10% off
+//   fixed      → `value` is a whole-rupee amount, e.g. 500 = Rs 500 off
+export const COUPON_TYPES = Object.freeze({ PERCENTAGE: 'percentage', FIXED: 'fixed' });
+
 // Upper limits that protect the database (and the UI) from unbounded lists.
 export const LIMITS = Object.freeze({
   MAX_ADDRESSES: 5, // a customer may save at most 5 delivery addresses
@@ -63,8 +72,66 @@ export const LIMITS = Object.freeze({
   STOCK_HISTORY_KEEP: 50, // a product remembers only its last 50 manual stock changes
   LOW_STOCK_THRESHOLD: 5, // stock at or below this number shows up in the admin's low-stock list
   MAX_IMAGE_BYTES: 2 * 1024 * 1024, // an uploaded image may be at most 2 MB
+  // BR-04: a customer may put at most 10 of ONE product in the cart (and never more than
+  // the stock). Stops one buyer from emptying the shelf and keeps orders realistic.
+  MAX_CART_QTY: 10,
+  // A wishlist is a list of "maybe later" products. 100 is plenty and keeps it small.
+  MAX_WISHLIST: 100,
+  // Coupons (branch 06): the biggest discount an admin may configure. A typo such as
+  // "value: 900" instead of "90" must never give away the whole shop.
+  COUPON_MAX_PERCENT: 90, // a percentage coupon gives at most 90% off
+  COUPON_MAX_FIXED: 100_000, // a fixed coupon gives at most Rs 100,000 off
+});
+
+// Money rules. All amounts are WHOLE RUPEES (integers): no paisa, no 0.1 + 0.2 surprises.
+// Used by utils/pricing.js (cart totals now, order totals in branch 07).
+export const PRICING = Object.freeze({
+  SHIPPING_FEE: 250, // BR-02: flat delivery fee in Rs…
+  FREE_SHIPPING_MIN: 5000, // BR-02: …which is FREE when the subtotal is Rs 5,000 or more
+  TAX_RATE: 0, // BR-03: prices already include tax, so no tax line is added
 });
 
 // The only file types the upload endpoint accepts (checked by their MIME type, the
 // "content type" label every uploaded file carries). No GIF/SVG: SVG files can contain scripts.
 export const IMAGE_MIME_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp']);
+
+/* ---------- Orders (branch 07) ---------- */
+
+// Every state an order can be in. An order is a small "state machine": it is always in
+// exactly ONE of these states and may only move along the arrows in ORDER_TRANSITIONS.
+// See docs/concepts/21-state-machines-and-snapshots.md.
+export const ORDER_STATUS = Object.freeze({
+  PENDING: 'pending', // just placed, nobody has looked at it yet
+  CONFIRMED: 'confirmed', // the shop accepted it
+  PROCESSING: 'processing', // being packed
+  SHIPPED: 'shipped', // handed to the courier (needs a tracking number)
+  DELIVERED: 'delivered', // final: the customer has it (COD becomes "paid" here)
+  CANCELLED: 'cancelled', // final: stock and coupon use were given back
+});
+
+// BR-08: the allowed NEXT statuses for each status (the arrows of the state machine).
+// Anything not listed is refused, e.g. delivered → pending, or shipped → cancelled.
+// Final states have an empty list: nothing can happen after them.
+export const ORDER_TRANSITIONS = Object.freeze({
+  pending: Object.freeze(['confirmed', 'cancelled']),
+  confirmed: Object.freeze(['processing', 'cancelled']),
+  processing: Object.freeze(['shipped', 'cancelled']),
+  shipped: Object.freeze(['delivered']),
+  delivered: Object.freeze([]),
+  cancelled: Object.freeze([]),
+});
+
+// BR-06: a CUSTOMER may cancel only before the shop starts packing.
+// (An admin may still cancel while processing; see ORDER_TRANSITIONS.)
+export const CUSTOMER_CANCELLABLE = Object.freeze(['pending', 'confirmed']);
+
+// How the customer pays. COD = Cash on Delivery (works now). CARD = Stripe (branch 08).
+export const PAYMENT_METHODS = Object.freeze({ COD: 'COD', CARD: 'CARD' });
+
+// Where the money is. COD orders stay "pending" until delivery, then become "paid".
+export const PAYMENT_STATUS = Object.freeze({
+  PENDING: 'pending',
+  PAID: 'paid',
+  FAILED: 'failed',
+  REFUNDED: 'refunded',
+});

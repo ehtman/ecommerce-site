@@ -1,0 +1,21 @@
+meta {
+  name: Wishlist – remove A again (idempotent → 200)
+  type: http
+  seq: 32
+}
+
+delete {
+  url: {{baseUrl}}/wishlist/{{productId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+}

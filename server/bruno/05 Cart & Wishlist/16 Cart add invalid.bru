@@ -1,0 +1,29 @@
+meta {
+  name: Cart – add invalid body → 400
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "abc",
+    "quantity": 0
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 400", function () { expect(status).to.eql(400); });
+  test("two field errors", function () { expect(j.errors.length).to.eql(2); });
+}

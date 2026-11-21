@@ -1,0 +1,32 @@
+meta {
+  name: Apply – code in lowercase → 200 (20% capped at Rs 500)
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCodeLower}}"
+  }
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  const totals = res.body.data;
+  test('20% of 4,000 is 800, capped at 500', function () { expect(totals.discountPrice).to.eql(500); });
+  test('total = 4,000 - 500 + 250 shipping', function () {
+    expect(totals.itemsPrice).to.eql(4000);
+    expect(totals.shippingPrice).to.eql(250);
+    expect(totals.totalPrice).to.eql(3750);
+  });
+}

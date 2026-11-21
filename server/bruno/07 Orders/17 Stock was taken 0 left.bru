@@ -1,0 +1,16 @@
+meta {
+  name: Stock was taken (0 left)
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/products/{{orderProductSlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('stock is 0', () => expect(res.body.data.stock).to.equal(0));
+}

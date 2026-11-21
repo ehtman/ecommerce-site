@@ -1,0 +1,29 @@
+meta {
+  name: Register – coupon customer
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Coupon Tester",
+    "email": "{{couponEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  // This folder creates its OWN customer, so it can run on its own
+  bru.setEnvVar('couponEmail', 'bruno.coupon' + Date.now() + '@example.com');
+}
+
+tests {
+  test('status is 201', function () { expect(res.status).to.eql(201); });
+  bru.setEnvVar('couponToken', res.body.data.token);
+}

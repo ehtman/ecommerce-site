@@ -1,0 +1,38 @@
+meta {
+  name: Admin creates a product with only 2 in stock
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "name": "Order Test Mug {{orderSku}}",
+    "description": "A ceramic mug used by the orders API tests.",
+    "sku": "{{orderSku}}",
+    "price": 1500,
+    "stock": 2,
+    "category": "{{orderCategoryId}}",
+    "images": [{ "url": "https://res.cloudinary.com/demo/image/upload/sample.jpg", "publicId": "demo/sample" }]
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar('orderSku', 'ORD-' + Date.now());
+}
+
+tests {
+  test('status is 201', () => expect(res.status).to.equal(201));
+  test('stock is 2', () => expect(res.body.data.stock).to.equal(2));
+  bru.setEnvVar('orderProductId', res.body.data._id);
+  bru.setEnvVar('orderProductSlug', res.body.data.slug);
+}

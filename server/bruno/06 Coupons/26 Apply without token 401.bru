@@ -1,0 +1,21 @@
+meta {
+  name: Apply – without token → 401
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "code": "{{couponCode}}"
+  }
+}
+
+tests {
+  test('status is 401', function () { expect(res.status).to.eql(401); });
+}

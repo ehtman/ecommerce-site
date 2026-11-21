@@ -1,0 +1,26 @@
+meta {
+  name: Add 1 mug to the cart again
+  type: http
+  seq: 27
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "productId": "{{orderProductId}}",
+    "quantity": 1
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+}

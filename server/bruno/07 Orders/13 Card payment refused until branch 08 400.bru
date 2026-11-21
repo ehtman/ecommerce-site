@@ -1,0 +1,26 @@
+meta {
+  name: Card payment refused (until branch 08) → 400
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "addressId": "{{orderAddressId}}",
+    "paymentMethod": "CARD"
+  }
+}
+
+tests {
+  test('status is 400', () => expect(res.status).to.equal(400));
+}

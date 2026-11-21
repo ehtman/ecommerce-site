@@ -1,0 +1,23 @@
+meta {
+  name: Apply – no code → 400
+  type: http
+  seq: 25
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test('status is 400', function () { expect(res.status).to.eql(400); });
+}

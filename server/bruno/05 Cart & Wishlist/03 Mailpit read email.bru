@@ -1,0 +1,20 @@
+meta {
+  name: Mailpit – read verification email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/message/{{mailId}}
+  body: none
+  auth: none
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  const match = (j.Text || '').match(/token=([a-f0-9]+)/);
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("email has a token link", function () { expect(match !== null).to.eql(true); });
+  bru.setEnvVar("verifyToken", match[1]);
+}

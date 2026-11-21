@@ -1,0 +1,33 @@
+meta {
+  name: Admin – create category
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "{{cartCategoryName}}",
+    "description": "Created by the cart tests"
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar('cartCategoryName', 'Cart Test ' + Date.now());
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 201", function () { expect(status).to.eql(201); });
+  bru.setEnvVar("categoryId", j.data._id);
+}

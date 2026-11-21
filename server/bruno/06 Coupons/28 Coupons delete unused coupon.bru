@@ -1,0 +1,20 @@
+meta {
+  name: Coupons – delete unused coupon
+  type: http
+  seq: 28
+}
+
+delete {
+  url: {{baseUrl}}/coupons/{{couponId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  test('really deleted (it was never used)', function () { expect(res.body.data.deactivated).to.eql(false); });
+}

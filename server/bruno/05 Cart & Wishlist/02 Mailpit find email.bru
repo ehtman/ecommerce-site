@@ -1,0 +1,22 @@
+meta {
+  name: Mailpit – find my verification email
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/search?query=to:{{cartEmail}}
+  body: none
+  auth: none
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  // Search ONLY the emails sent to our customer (Mailpit is shared, so never use "latest"),
+  // then take the newest one.
+  const msgs = (j.messages || []).slice().sort((a, b) => new Date(b.Created) - new Date(a.Created));
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("an email to our customer arrived", function () { expect(msgs.length > 0).to.eql(true); });
+  bru.setEnvVar("mailId", msgs[0].ID);
+}

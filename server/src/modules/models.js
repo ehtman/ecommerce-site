@@ -9,3 +9,8 @@ export { default as User } from './users/user.model.js';
 export { default as Address } from './addresses/address.model.js';
 export { default as Category } from './categories/category.model.js';
 export { default as Product } from './products/product.model.js';
+export { default as Cart } from './cart/cart.model.js';
+export { default as Wishlist } from './wishlist/wishlist.model.js';
+export { default as Coupon } from './coupons/coupon.model.js';
+// Branch 07
+export { default as Order } from './orders/order.model.js';

@@ -1,0 +1,25 @@
+meta {
+  name: Admin → confirmed
+  type: http
+  seq: 29
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId2}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "confirmed"
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+}

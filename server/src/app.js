@@ -28,6 +28,10 @@ import addressRoutes from './modules/addresses/address.routes.js';
 import categoryRoutes from './modules/categories/category.routes.js';
 import productRoutes from './modules/products/product.routes.js';
 import uploadRoutes from './modules/uploads/upload.routes.js';
+import cartRoutes from './modules/cart/cart.routes.js';
+import wishlistRoutes from './modules/wishlist/wishlist.routes.js';
+import couponRoutes from './modules/coupons/coupon.routes.js';
+import orderRoutes, { adminOrderRoutes } from './modules/orders/order.routes.js';
 
 const app = express();
 
@@ -74,6 +78,12 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/categories', categoryRoutes); // public reads + admin writes
 app.use('/api/products', productRoutes);
 app.use('/api/uploads', uploadRoutes); // admin image uploads (multipart → Cloudinary)
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/orders', orderRoutes);
+// Branch 10 moves the admin order routes into /api/admin (admin.routes.js), same URLs
+app.use('/api/admin/orders', adminOrderRoutes);
 
 // ---------- Fallbacks (must be LAST) ----------
 app.use(notFound); // no route matched → 404

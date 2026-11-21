@@ -1,0 +1,33 @@
+meta {
+  name: Place COD order
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "addressId": "{{orderAddressId}}",
+    "paymentMethod": "COD",
+    "note": "Please call first"
+  }
+}
+
+tests {
+  test('status is 201', () => expect(res.status).to.equal(201));
+  const order = res.body.data;
+  test('server calculated the totals', () => { expect(order.itemsPrice).to.equal(3000); expect(order.shippingPrice).to.equal(250); expect(order.totalPrice).to.equal(3250); });
+  test('price snapshot', () => expect(order.items[0].price).to.equal(1500));
+  test('starts pending', () => expect(order.status).to.equal('pending'));
+  bru.setEnvVar('orderId', order._id);
+  bru.setEnvVar('orderNumber', order.orderNumber);
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Place second COD order
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "addressId": "{{orderAddressId}}"
+  }
+}
+
+tests {
+  test('status is 201', () => expect(res.status).to.equal(201));
+  test('COD is the default', () => expect(res.body.data.paymentMethod).to.equal('COD'));
+  bru.setEnvVar('orderId2', res.body.data._id);
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Mailpit – find my verification email
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/search?query=to:{{couponEmail}}
+  body: none
+  auth: none
+}
+
+tests {
+  // Mailpit is shared by every test run, so search for OUR address and take the newest
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+  const messages = res.body.messages || [];
+  test('an email was sent to our customer', function () { expect(messages.length).to.be.above(0); });
+  const newest = messages.slice().sort(function (a, b) { return new Date(b.Created) - new Date(a.Created); })[0];
+  bru.setEnvVar('couponMailId', newest.ID);
+}

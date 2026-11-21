@@ -1,0 +1,25 @@
+meta {
+  name: Admin → processing
+  type: http
+  seq: 30
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId2}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "processing"
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+}

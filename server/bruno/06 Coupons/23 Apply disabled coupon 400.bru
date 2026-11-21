@@ -1,0 +1,26 @@
+meta {
+  name: Apply – disabled coupon → 400
+  type: http
+  seq: 23
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCode2}}"
+  }
+}
+
+tests {
+  test('status is 400', function () { expect(res.status).to.eql(400); });
+  test('says not active', function () { expect(res.body.message).to.eql('Coupon is not active'); });
+}

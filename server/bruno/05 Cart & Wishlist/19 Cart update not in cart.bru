@@ -1,0 +1,27 @@
+meta {
+  name: Cart – update a product that is not in my cart → 404
+  type: http
+  seq: 19
+}
+
+put {
+  url: {{baseUrl}}/cart/items/{{inactiveProductId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "quantity": 1
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 404", function () { expect(status).to.eql(404); });
+}

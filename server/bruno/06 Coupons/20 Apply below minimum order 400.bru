@@ -1,0 +1,26 @@
+meta {
+  name: Apply – below minimum order → 400
+  type: http
+  seq: 20
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCode}}"
+  }
+}
+
+tests {
+  test('status is 400', function () { expect(res.status).to.eql(400); });
+  test('explains the minimum', function () { expect(res.body.message).to.eql('Minimum order is Rs 3,000'); });
+}

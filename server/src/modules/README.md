@@ -21,6 +21,10 @@ Build order when writing a new module: **model → validation → service → co
 | [`categories/`](categories/README.md) | Product categories: public reads by slug, admin-only writes, two levels                             |
 | [`products/`](products/README.md)     | The catalogue: public list (filters, text search, sort, pagination), admin CRUD, stock with history |
 | [`uploads/`](uploads/README.md)       | Admin image uploads to Cloudinary (multipart → `{ url, publicId }`)                                 |
+| [`cart/`](cart/README.md)             | A customer's cart: embedded lines, live prices, max 10 per product, shipping                        |
+| [`wishlist/`](wishlist/README.md)     | A customer's saved products: idempotent add, max 100                                                |
+| [`coupons/`](coupons/README.md)       | Discount codes: customer preview on the cart, admin CRUD, atomic usage counter                      |
+| [`orders/`](orders/README.md)         | Checkout in one transaction, order history, cancel, admin status machine                            |
 | `models.js`                           | Re-exports every model: `import { User } from '../models.js'`                                       |
 
 Each new branch adds a folder here, one line in `models.js` (if it has a model) and one line in `app.js`.

@@ -1,0 +1,18 @@
+meta {
+  name: Mailpit – confirmation email arrived
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/search?query=to:{{orderEmail}}
+  body: none
+  auth: none
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  const found = res.body.messages || [];
+  const subjects = found.map((m) => m.Subject);
+  test('confirmation email was sent', () => expect(subjects).to.include('Order ' + bru.getEnvVar('orderNumber') + ' confirmed'));
+}

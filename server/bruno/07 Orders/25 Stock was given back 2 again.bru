@@ -1,0 +1,16 @@
+meta {
+  name: Stock was given back (2 again)
+  type: http
+  seq: 25
+}
+
+get {
+  url: {{baseUrl}}/products/{{orderProductSlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('stock is 2', () => expect(res.body.data.stock).to.equal(2));
+}

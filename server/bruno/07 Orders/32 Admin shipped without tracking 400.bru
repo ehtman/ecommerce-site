@@ -1,0 +1,25 @@
+meta {
+  name: Admin → shipped without tracking → 400
+  type: http
+  seq: 32
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId2}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "shipped"
+  }
+}
+
+tests {
+  test('status is 400', () => expect(res.status).to.equal(400));
+}
