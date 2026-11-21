@@ -1,5 +1,5 @@
 /**
- * src/emails/templates.js – the content of every auth email.
+ * src/emails/templates.js – the content of every email (auth, and orders from branch 07).
  *
  * Each function returns { subject, html, text }:
  *   html = the pretty version, text = plain fallback for simple email apps.
@@ -71,5 +71,86 @@ export function passwordChangedTemplate(name) {
       '<p>Your password was changed. If this was not you, reset your password immediately.</p>',
     ),
     text: `Hi ${name}, your password was changed.`,
+  };
+}
+
+/* ---------- Orders (branch 07) ---------- */
+
+// Money as customers read it: 12500 → "Rs 12,500" (all amounts are whole rupees)
+const rs = (n) => `Rs ${Number(n).toLocaleString('en-PK')}`;
+
+// Where the customer can see the order in the React app
+const orderLink = (order) => `${env.FRONTEND_URL}/account/orders/${order._id}`;
+
+// The receipt table: one row per item, then the money breakdown.
+// Product names come from the database, but an admin typed them, so we still escape them.
+function itemsTable(order) {
+  const rows = order.items
+    .map(
+      (i) =>
+        `<tr><td style="padding:6px 0">${escapeHtml(i.name)} × ${i.quantity}</td><td style="text-align:right">${rs(i.subtotal)}</td></tr>`,
+    )
+    .join('');
+  return `<table style="width:100%;border-collapse:collapse;font-size:14px">
+    ${rows}
+    <tr><td style="padding-top:12px">Items</td><td style="text-align:right;padding-top:12px">${rs(order.itemsPrice)}</td></tr>
+    ${order.discountPrice ? `<tr><td>Discount</td><td style="text-align:right">- ${rs(order.discountPrice)}</td></tr>` : ''}
+    <tr><td>Shipping</td><td style="text-align:right">${order.shippingPrice ? rs(order.shippingPrice) : 'Free'}</td></tr>
+    <tr><td><b>Total</b></td><td style="text-align:right"><b>${rs(order.totalPrice)}</b></td></tr>
+  </table>`;
+}
+
+// Sent right after a COD order is placed (branch 08: after Stripe confirms a CARD payment)
+export function orderConfirmationTemplate(name, order) {
+  const link = orderLink(order);
+  const a = order.shippingAddress; // the SNAPSHOT stored in the order, not the live address
+  // Every customer-typed value is escaped (name, address lines…)
+  const shipTo = [
+    `${escapeHtml(a.fullName)}, ${escapeHtml(a.phone)}`,
+    `${escapeHtml(a.addressLine1)}${a.addressLine2 ? `, ${escapeHtml(a.addressLine2)}` : ''}`,
+    `${escapeHtml(a.city)}, ${escapeHtml(a.province)} ${escapeHtml(a.postalCode)}`,
+  ].join('<br/>');
+  return {
+    subject: `Order ${order.orderNumber} confirmed`,
+    html: layout(
+      `Thank you for your order, ${escapeHtml(name)}!`,
+      `<p>Order number: <b>${order.orderNumber}</b><br/>Payment: ${order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Card'}</p>
+      ${itemsTable(order)}
+      <p style="margin-top:16px"><b>Ship to:</b><br/>${shipTo}</p>
+      ${button(link, 'View order')}`,
+    ),
+    text: `Order ${order.orderNumber} placed. Total ${rs(order.totalPrice)}. ${link}`,
+  };
+}
+
+// The sentence used for each status ("Your order ORD-… has been shipped")
+const STATUS_TEXT = {
+  confirmed: 'has been confirmed',
+  processing: 'is being prepared',
+  shipped: 'has been shipped',
+  delivered: 'has been delivered',
+  cancelled: 'has been cancelled',
+};
+
+// Sent when the status changes (confirmed, shipped, delivered, cancelled)
+export function orderStatusTemplate(name, order) {
+  const link = orderLink(order);
+  const sentence = STATUS_TEXT[order.status] || 'was updated';
+  // Extra lines only when they make sense for this status
+  const extra =
+    order.status === 'shipped' && order.trackingNumber
+      ? `<p>Tracking number: <b>${escapeHtml(order.trackingNumber)}</b></p>`
+      : '';
+  const reason =
+    order.status === 'cancelled' && order.cancelReason
+      ? `<p>Reason: ${escapeHtml(order.cancelReason)}</p>`
+      : '';
+  return {
+    subject: `Order ${order.orderNumber} ${sentence}`,
+    html: layout(
+      `Hi ${escapeHtml(name)}`,
+      `<p>Your order <b>${order.orderNumber}</b> ${sentence}.</p>${extra}${reason}${button(link, 'View order')}`,
+    ),
+    text: `Your order ${order.orderNumber} ${sentence}. ${link}`,
   };
 }

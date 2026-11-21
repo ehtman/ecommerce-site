@@ -1,0 +1,25 @@
+meta {
+  name: Apply – as admin → 403 (customers only)
+  type: http
+  seq: 27
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCode}}"
+  }
+}
+
+tests {
+  test('status is 403', function () { expect(res.status).to.eql(403); });
+}

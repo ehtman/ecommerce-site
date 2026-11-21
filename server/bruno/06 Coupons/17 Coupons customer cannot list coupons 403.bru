@@ -1,0 +1,19 @@
+meta {
+  name: Coupons – customer cannot list coupons → 403
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/coupons
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+tests {
+  test('status is 403', function () { expect(res.status).to.eql(403); });
+}

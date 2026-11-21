@@ -1,0 +1,21 @@
+meta {
+  name: Wishlist – admin → 403 (customers only)
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{baseUrl}}/wishlist
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 403", function () { expect(status).to.eql(403); });
+}

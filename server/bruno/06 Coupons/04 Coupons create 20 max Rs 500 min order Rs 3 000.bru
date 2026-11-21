@@ -1,0 +1,44 @@
+meta {
+  name: Coupons – create 20% (max Rs 500, min order Rs 3,000)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/coupons
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCode}}",
+    "description": "API test: 20% off",
+    "type": "percentage",
+    "value": 20,
+    "maxDiscount": 500,
+    "minOrderAmount": 3000,
+    "usageLimit": 100,
+    "expiresAt": "2030-12-31T23:59:59Z"
+  }
+}
+
+script:pre-request {
+  // A unique code every run (letters + digits only), so the collection can run again and again
+  bru.setEnvVar('couponCode', 'BR' + Date.now().toString(36).toUpperCase());
+}
+
+tests {
+  test('status is 201', function () { expect(res.status).to.eql(201); });
+  const coupon = res.body.data;
+  test('code saved in uppercase, unused, active', function () {
+    expect(coupon.code).to.eql(bru.getEnvVar('couponCode'));
+    expect(coupon.usedCount).to.eql(0);
+    expect(coupon.state).to.eql('active');
+  });
+  bru.setEnvVar('couponId', coupon._id);
+}

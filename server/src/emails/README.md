@@ -7,4 +7,4 @@
 
 See them for real: `docker compose up -d`, register a user, open http://localhost:8025.
 
-Branch 07 adds order emails here.
+Branch 07 added `orderConfirmationTemplate(name, order)` (items table, totals, ship-to snapshot) and `orderStatusTemplate(name, order)` (confirmed / shipped + tracking / delivered / cancelled + reason). Every user-typed value is escaped.

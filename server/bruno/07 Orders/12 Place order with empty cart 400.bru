@@ -1,0 +1,26 @@
+meta {
+  name: Place order with empty cart → 400
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "addressId": "{{orderAddressId}}"
+  }
+}
+
+tests {
+  test('status is 400', () => expect(res.status).to.equal(400));
+  test('cart is empty', () => expect(res.body.message).to.equal('Your cart is empty'));
+}

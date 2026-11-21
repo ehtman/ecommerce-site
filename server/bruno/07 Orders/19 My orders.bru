@@ -1,0 +1,21 @@
+meta {
+  name: My orders
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrl}}/orders/my
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('lists the new order', () => expect(res.body.data.map((o) => o._id)).to.include(bru.getEnvVar('orderId')));
+  test('has pagination meta', () => expect(res.body.meta.total).to.equal(1));
+}

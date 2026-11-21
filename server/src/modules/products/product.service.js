@@ -13,7 +13,7 @@
  * and docs/concepts/17-file-uploads-and-cdn.md (images on Cloudinary).
  */
 import mongoose from 'mongoose';
-import { Product, Category } from '../models.js';
+import { Product, Category, Cart, Wishlist, Order } from '../models.js';
 import ApiError from '../../utils/ApiError.js';
 import { getPagination, buildMeta } from '../../utils/pagination.js';
 import { deleteImage } from '../../config/cloudinary.js';
@@ -234,19 +234,31 @@ export async function updateProduct(id, body) {
 }
 
 /**
- * Delete a product and its images.
- * @returns {{ softDeleted: boolean }} false = really deleted
+ * Delete a product, its images, and its lines in every cart and wishlist.
+ * BR-10: a product that appears in an order is only HIDDEN (isActive = false), so order
+ * history never points at a missing product.
+ * @returns {{ softDeleted: boolean }} true = hidden, false = really deleted
  */
 export async function deleteProduct(id) {
   const product = await Product.findById(id);
   if (!product) throw notFound();
 
-  // Branch 07: if an order contains this product (Order.exists({ 'items.product': id })),
-  //   only set isActive = false and return { softDeleted: true }, so order history never
-  //   points at a missing product.
-  // Branch 05 / 09: also remove it from every cart and wishlist, and delete its reviews.
+  // BR-10 (branch 07): used in an order → soft delete. The order keeps its own snapshot,
+  // but "view product" links and reports still need the document.
+  if (await Order.exists({ 'items.product': id })) {
+    product.isActive = false;
+    await product.save({ validateModifiedOnly: true });
+    return { softDeleted: true };
+  }
+  // Branch 09: also delete its reviews.
 
   await product.deleteOne();
+  // Branch 05: nobody's cart or wishlist may keep pointing at a deleted product.
+  // updateMany + $pull removes the matching line/id from EVERY cart/wishlist in one query each.
+  await Promise.all([
+    Cart.updateMany({ 'items.product': id }, { $pull: { items: { product: id } } }),
+    Wishlist.updateMany({ products: id }, { $pull: { products: id } }),
+  ]);
   // Images last: a failure here never undoes the delete (deleteImage never throws)
   await Promise.all(product.images.map((img) => deleteImage(img.publicId)));
   return { softDeleted: false };

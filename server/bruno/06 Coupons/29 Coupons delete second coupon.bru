@@ -1,0 +1,19 @@
+meta {
+  name: Coupons – delete second coupon
+  type: http
+  seq: 29
+}
+
+delete {
+  url: {{baseUrl}}/coupons/{{couponId2}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test('status is 200', function () { expect(res.status).to.eql(200); });
+}

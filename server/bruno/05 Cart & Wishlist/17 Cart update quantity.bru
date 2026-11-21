@@ -1,0 +1,29 @@
+meta {
+  name: Cart – set A to 2
+  type: http
+  seq: 17
+}
+
+put {
+  url: {{baseUrl}}/cart/items/{{productId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "quantity": 2
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("quantity is 2", function () { expect(j.data.items[0].quantity).to.eql(2); });
+  test("subtotal", function () { expect(j.data.subtotal).to.eql(2400); });
+}

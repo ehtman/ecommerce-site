@@ -64,6 +64,11 @@ const env = {
   // ---------- Rate limiting ----------
   // Only the exact text "false" turns limits off (handy for repeated Postman runs and tests).
   RATE_LIMIT_ENABLED: process.env.RATE_LIMIT_ENABLED !== 'false',
+
+  // ---------- Payments ----------
+  // Only the exact text "true" turns card payments on. Until Stripe exists (branch 08)
+  // it stays off, and placing a CARD order is refused with a friendly 400.
+  PAYMENT_CARD_ENABLED: process.env.PAYMENT_CARD_ENABLED === 'true',
 };
 
 // CLIENT_URL may hold several URLs separated by commas (e.g. localhost + the live site).

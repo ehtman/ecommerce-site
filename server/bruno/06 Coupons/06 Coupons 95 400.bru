@@ -1,0 +1,29 @@
+meta {
+  name: Coupons – 95% → 400
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/coupons
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "code": "TOOMUCH95",
+    "type": "percentage",
+    "value": 95,
+    "expiresAt": "2030-12-31T23:59:59Z"
+  }
+}
+
+tests {
+  test('status is 400', function () { expect(res.status).to.eql(400); });
+  test('value is the bad field', function () { expect(res.body.errors[0].field).to.eql('value'); });
+}

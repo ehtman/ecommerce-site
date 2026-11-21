@@ -1,0 +1,33 @@
+meta {
+  name: Cart – add 2 × A with a fake price (ignored)
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cartToken}}
+}
+
+body:json {
+  {
+    "productId": "{{productId}}",
+    "quantity": 2,
+    "price": 1
+  }
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 200", function () { expect(status).to.eql(200); });
+  test("price comes from the database", function () { expect(j.data.items[0].product.price).to.eql(1200); });
+  test("subtotal 2 × 1200", function () { expect(j.data.subtotal).to.eql(2400); });
+  test("Rs 250 shipping below Rs 5,000", function () { expect(j.data.shipping).to.eql(250); });
+  test("total", function () { expect(j.data.total).to.eql(2650); });
+}

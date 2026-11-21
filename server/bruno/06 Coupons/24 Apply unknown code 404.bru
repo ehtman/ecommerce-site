@@ -1,0 +1,25 @@
+meta {
+  name: Apply – unknown code → 404
+  type: http
+  seq: 24
+}
+
+post {
+  url: {{baseUrl}}/coupons/validate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{couponToken}}
+}
+
+body:json {
+  {
+    "code": "NOSUCHCODE1"
+  }
+}
+
+tests {
+  test('status is 404', function () { expect(res.status).to.eql(404); });
+}

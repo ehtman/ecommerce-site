@@ -1,0 +1,45 @@
+meta {
+  name: Admin – create product C (Rs 900, stock 10, inactive)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Cart Hidden {{cartSkuC}}",
+    "description": "A product created by the cart and wishlist API tests.",
+    "brand": "ShopEase",
+    "sku": "{{cartSkuC}}",
+    "price": 900,
+    "stock": 10,
+    "category": "{{categoryId}}",
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+        "publicId": "sample"
+      }
+    ],
+    "isActive": false
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar('cartSkuC', 'CART-C-' + Date.now());
+}
+
+tests {
+  const status = res.status;
+  const j = res.body;
+  test("status is 201", function () { expect(status).to.eql(201); });
+  bru.setEnvVar("inactiveProductId", j.data._id);
+}

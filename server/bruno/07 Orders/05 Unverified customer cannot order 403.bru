@@ -1,0 +1,26 @@
+meta {
+  name: Unverified customer cannot order → 403
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "addressId": "665f1c2e9b1e8a0012345678"
+  }
+}
+
+tests {
+  test('status is 403', () => expect(res.status).to.equal(403));
+  test('asks to verify the email', () => expect(res.body.message).to.equal('Please verify your email address to continue'));
+}

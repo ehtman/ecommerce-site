@@ -1,0 +1,31 @@
+meta {
+  name: Create delivery address
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderToken}}
+}
+
+body:json {
+  {
+    "fullName": "Order Tester",
+    "phone": "03001234567",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Lahore",
+    "province": "Punjab",
+    "postalCode": "54000"
+  }
+}
+
+tests {
+  test('status is 201', () => expect(res.status).to.equal(201));
+  bru.setEnvVar('orderAddressId', res.body.data._id);
+}

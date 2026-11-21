@@ -1,0 +1,27 @@
+meta {
+  name: Admin confirms the order
+  type: http
+  seq: 23
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{orderId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{orderAdminToken}}
+}
+
+body:json {
+  {
+    "status": "confirmed",
+    "note": "Stock checked"
+  }
+}
+
+tests {
+  test('status is 200', () => expect(res.status).to.equal(200));
+  test('confirmed', () => expect(res.body.data.status).to.equal('confirmed'));
+}

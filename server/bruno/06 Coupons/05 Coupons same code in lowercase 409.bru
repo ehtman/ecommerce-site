@@ -1,0 +1,33 @@
+meta {
+  name: Coupons – same code in lowercase → 409
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/coupons
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "code": "{{couponCodeLower}}",
+    "type": "fixed",
+    "value": 100,
+    "expiresAt": "2030-12-31T23:59:59Z"
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar('couponCodeLower', bru.getEnvVar('couponCode').toLowerCase());
+}
+
+tests {
+  test('status is 409', function () { expect(res.status).to.eql(409); });
+  test('explains the conflict', function () { expect(res.body.message).to.eql('Coupon code already exists'); });
+}

@@ -7,7 +7,17 @@
 import mongoose from 'mongoose';
 import request from 'supertest';
 import app from '../../src/app.js';
-import { User, Address, Category, Product } from '../../src/modules/models.js';
+import {
+  User,
+  Address,
+  Category,
+  Product,
+  Cart,
+  Wishlist,
+  Coupon,
+  Order,
+} from '../../src/modules/models.js';
+import { calcTotals } from '../../src/utils/pricing.js';
 import generateToken from '../../src/utils/generateToken.js';
 import { outbox } from '../../src/emails/sendEmail.js';
 
@@ -115,6 +125,30 @@ export async function createProduct(overrides = {}) {
   });
 }
 
+/**
+ * Puts `quantity` of `product` in the user's cart directly in the database (no HTTP, no
+ * stock check), so a test can start from any cart state. Same product again → quantities add.
+ * Returns the saved cart document.
+ */
+export async function addToCart(user, product, quantity = 1) {
+  const cart = await Cart.forUser(user._id); // get or create (upsert)
+  const line = cart.items.find((i) => String(i.product) === String(product._id));
+  if (line) line.quantity += quantity;
+  else cart.items.push({ product: product._id, quantity });
+  return cart.save();
+}
+
+/**
+ * Sets the user's wishlist to exactly `products` (documents or ids), directly in the
+ * database. Returns the wishlist document.
+ */
+export const createWishlist = (user, products = []) =>
+  Wishlist.findOneAndUpdate(
+    { user: user._id },
+    { $set: { products: products.map((p) => p._id || p) } },
+    { upsert: true, new: true },
+  );
+
 /** The supertest client for our app (no real network port needed). */
 export const api = () => request(app);
 
@@ -127,4 +161,78 @@ export function tokenFromLastEmail(email) {
   if (!mail) throw new Error(`No email sent to ${email}`);
   const match = mail.text.match(/token=([a-f0-9]+)/);
   return match ? match[1] : null;
+}
+
+/* ---------- Coupons (branch 06) ---------- */
+let couponSeq = 0;
+// A unique, VALID code per call: letters/digits only, at most 20 characters (e.g. "TLX3K9A2B1")
+export const uniqueCouponCode = (prefix = 'T') =>
+  `${prefix}${Date.now().toString(36)}${(couponSeq += 1)}`.toUpperCase().slice(0, 20);
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Saves a coupon directly in the database: by default an ACTIVE 10% coupon that started a
+ * minute ago and expires in 30 days, unlimited uses, no minimum order. Override anything:
+ *   createCoupon({ type: 'fixed', value: 500 })
+ *   createCoupon({ startsAt: past, expiresAt: yesterday })  // an expired coupon
+ * `createdBy` defaults to a fresh admin.
+ */
+export async function createCoupon(overrides = {}) {
+  const createdBy = overrides.createdBy || (await createAdmin())._id;
+  return Coupon.create({
+    code: uniqueCouponCode(),
+    type: 'percentage',
+    value: 10,
+    startsAt: new Date(Date.now() - 60 * 1000),
+    expiresAt: new Date(Date.now() + 30 * DAY_MS),
+    ...overrides,
+    createdBy,
+  });
+}
+
+/* ---------- Orders (branch 07) ---------- */
+
+/**
+ * Saves an order for `user` directly in the database (skips checkout: no stock is taken,
+ * no cart or coupon is touched). It holds a valid snapshot of ONE product line.
+ * Overrides: `product` (a Product document; one is created when missing), `quantity`
+ * (default 1), and any Order field, e.g. { status: 'shipped', trackingNumber: 'TCS1' }.
+ * The status is 'pending' unless overridden.
+ */
+export async function createOrder(user, overrides = {}) {
+  const { product: given, quantity = 1, ...rest } = overrides;
+  const product = given || (await createProduct());
+  // The snapshot line, exactly as checkout would build it
+  const item = {
+    product: product._id,
+    name: product.name,
+    slug: product.slug,
+    sku: product.sku,
+    image: product.images[0].url,
+    price: product.price,
+    quantity,
+    subtotal: product.price * quantity,
+  };
+  const { fullName, phone, addressLine1, city, province, postalCode } = validAddress();
+  return Order.create({
+    user: user._id,
+    items: [item],
+    shippingAddress: { fullName, phone, addressLine1, city, province, postalCode },
+    paymentMethod: 'COD',
+    ...calcTotals(item.subtotal), // itemsPrice, discountPrice, shippingPrice, taxPrice, totalPrice
+    ...rest,
+  });
+}
+
+/** Marks an order as delivered (COD → paid), as if it went through every status. */
+export async function deliverOrder(order) {
+  const doc = await Order.findById(order._id);
+  doc.status = 'delivered';
+  doc.deliveredAt = new Date();
+  doc.paymentStatus = 'paid';
+  doc.paidAt = new Date();
+  doc.trackingNumber = doc.trackingNumber || 'TRACK-TEST';
+  doc.statusHistory.push({ status: 'delivered', note: 'Delivered (test factory)' });
+  return doc.save();
 }
