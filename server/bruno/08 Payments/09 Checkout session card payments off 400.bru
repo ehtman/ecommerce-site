@@ -1,0 +1,31 @@
+meta {
+  name: Checkout session card payments off 400
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/payments/checkout-session
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{paymentsToken}}
+}
+
+body:json {
+  {
+    "orderId": "665f1c2e9b1e8a0012345678"
+  }
+}
+
+tests {
+  if (bru.getEnvVar("cardEnabled") === "true") {
+    // With real Stripe keys the flag is on, so the unknown order id answers 404
+    test("cards on: unknown order 404", function () { expect(res.status).to.equal(404); });
+  } else {
+    test("status is 400", function () { expect(res.status).to.equal(400); });
+    test("explains cards are off", function () { expect(res.body.message).to.equal("Card payments are not configured"); });
+  }
+}

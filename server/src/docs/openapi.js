@@ -19,6 +19,7 @@ import cartDocs from '../modules/cart/cart.docs.js';
 import wishlistDocs from '../modules/wishlist/wishlist.docs.js';
 import couponDocs from '../modules/coupons/coupon.docs.js';
 import orderDocs from '../modules/orders/order.docs.js';
+import paymentDocs from '../modules/payments/payment.docs.js';
 
 const spec = {
   openapi: '3.0.3',
@@ -33,6 +34,8 @@ const spec = {
     // "bearerAuth" = send `Authorization: Bearer <token>`
     securitySchemes: {
       bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      // "cronSecret" = send `x-cron-secret: <CRON_SECRET>` (scheduler-only routes)
+      ...paymentDocs.securitySchemes,
     },
     // Reusable shapes referenced with $ref below and in module docs
     schemas: {
@@ -226,6 +229,7 @@ const spec = {
     ...wishlistDocs.tags,
     ...couponDocs.tags,
     ...orderDocs.tags,
+    ...paymentDocs.tags,
   ],
   paths: {
     '/health': {
@@ -245,6 +249,7 @@ const spec = {
     ...wishlistDocs.paths,
     ...couponDocs.paths,
     ...orderDocs.paths,
+    ...paymentDocs.paths,
   },
 };
 

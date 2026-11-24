@@ -1,0 +1,20 @@
+meta {
+  name: Mailpit find verification email
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/search?query=to:{{paymentsEmail}}
+  body: none
+  auth: none
+}
+
+tests {
+  // Mailpit is shared, so we SEARCH by recipient (not "latest") and keep the newest id
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  const found = res.body.messages || [];
+  test("an email was sent to our customer", function () { expect(found.length).to.be.above(0); });
+  const newest = found.slice().sort((a, b) => new Date(b.Created) - new Date(a.Created))[0];
+  bru.setEnvVar("paymentsMailId", newest.ID);
+}

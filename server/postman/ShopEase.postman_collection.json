@@ -6453,6 +6453,548 @@
           }
         }
       ]
+    },
+    {
+      "name": "08 Payments",
+      "description": "Self-contained: registers and verifies its own customer (Mailpit search by recipient) and logs in the admin. Live Stripe is NOT needed: covers the card-disabled answers, webhook signature refusal and the cron secret. The paid flow (signed webhook) is covered by Jest and by `stripe listen` (docs/modules/08-payments.md). Needs: API running, Mailpit, admin seeded, RATE_LIMIT_ENABLED=false, CRON_SECRET in .env equal to the cronSecret variable.",
+      "item": [
+        {
+          "name": "Health – card payments flag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const health = pm.response.json().data;",
+                  "pm.test('reports cardPaymentsEnabled as true/false', () => pm.expect(health.cardPaymentsEnabled).to.be.a('boolean'));",
+                  "// Later requests expect different answers when cards are ON (needs real Stripe keys)",
+                  "pm.environment.set('cardEnabled', String(health.cardPaymentsEnabled));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "Register – payments customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Folder 08 creates its OWN customer, so it can run on its own",
+                  "pm.environment.set('paymentsEmail', 'postman.pay' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 201', () => pm.response.to.have.status(201));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Payments Tester\",\n  \"email\": \"{{paymentsEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Mailpit – find verification email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Mailpit is shared, so we SEARCH for mail sent to our address (not 'latest')",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const found = pm.response.json().messages || [];",
+                  "pm.test('an email was sent to our customer', () => pm.expect(found.length).to.be.above(0));",
+                  "// Keep the NEWEST message id (sorted by creation time to be safe)",
+                  "const newest = found.slice().sort((a, b) => new Date(b.Created) - new Date(a.Created))[0];",
+                  "pm.environment.set('paymentsMailId', newest.ID);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "description": "Needs Mailpit running. Searches by recipient and keeps the newest message id.",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/search?query=to:{{paymentsEmail}}"
+          }
+        },
+        {
+          "name": "Mailpit – read verification email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const mail = pm.response.json();",
+                  "pm.test('sent to our customer', () => pm.expect(mail.To[0].Address).to.eql(pm.environment.get('paymentsEmail')));",
+                  "const match = (mail.Text || '').match(/token=([a-f0-9]+)/);",
+                  "pm.test('the email contains a token link', () => pm.expect(match).to.not.equal(null));",
+                  "pm.environment.set('verifyToken', match[1]);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/message/{{paymentsMailId}}"
+          }
+        },
+        {
+          "name": "Verify email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verifyToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/verify-email"
+          }
+        },
+        {
+          "name": "Login – payments customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('paymentsToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{paymentsEmail}}\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Checkout session – no token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"665f1c2e9b1e8a0012345678\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/checkout-session"
+          }
+        },
+        {
+          "name": "Checkout session – invalid orderId → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test('error is on orderId', () => pm.expect(body.errors[0].field).to.eql('orderId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{paymentsToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"not-an-id\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/checkout-session"
+          }
+        },
+        {
+          "name": "Checkout session – card payments off → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cardsOn = pm.environment.get('cardEnabled') === 'true';",
+                  "if (cardsOn) {",
+                  "  // With real Stripe keys the flag is on, so the unknown order id answers 404",
+                  "  pm.test('cards on: unknown order → 404', () => pm.response.to.have.status(404));",
+                  "} else {",
+                  "  pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "  pm.test('explains cards are off', () => pm.expect(pm.response.json().message).to.eql('Card payments are not configured'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{paymentsToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"665f1c2e9b1e8a0012345678\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/checkout-session"
+          }
+        },
+        {
+          "name": "Place CARD order – card payments off → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const cardsOn = pm.environment.get('cardEnabled') === 'true';",
+                  "if (cardsOn) {",
+                  "  pm.test('cards on: unknown address → 404', () => pm.response.to.have.status(404));",
+                  "} else {",
+                  "  pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "  pm.test('card orders are refused', () => pm.expect(pm.response.json().message).to.eql('Card payments are not available right now'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{paymentsToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"665f1c2e9b1e8a0012345678\",\n  \"paymentMethod\": \"CARD\"\n}"
+            },
+            "url": "{{baseUrl}}/orders"
+          }
+        },
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 (run npm run seed:admin first)', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('adminToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/login"
+          }
+        },
+        {
+          "name": "Checkout session – admin → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403 (paying is a customer action)', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"665f1c2e9b1e8a0012345678\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/checkout-session"
+          }
+        },
+        {
+          "name": "Webhook – no Stripe-Signature → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"checkout.session.completed\",\n  \"data\": { \"object\": { \"id\": \"cs_test_fake\", \"payment_status\": \"paid\" } }\n}"
+            },
+            "url": "{{baseUrl}}/payments/webhook"
+          }
+        },
+        {
+          "name": "Webhook – fake signature → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Nobody can pretend to be Stripe: the signature needs our secret",
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "const message = pm.response.json().message;",
+                  "// 'Invalid Stripe signature' when a webhook secret is set, else 'not configured'",
+                  "pm.test('refused', () => pm.expect(message).to.match(/Invalid Stripe signature|not configured/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Stripe-Signature",
+                "value": "t=1700000000,v1=0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"checkout.session.completed\",\n  \"data\": { \"object\": { \"id\": \"cs_test_fake\", \"payment_status\": \"paid\" } }\n}"
+            },
+            "url": "{{baseUrl}}/payments/webhook"
+          }
+        },
+        {
+          "name": "Expire unpaid – no secret → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/payments/expire-unpaid"
+          }
+        },
+        {
+          "name": "Expire unpaid – wrong secret → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-cron-secret",
+                "value": "wrong-secret"
+              }
+            ],
+            "url": "{{baseUrl}}/payments/expire-unpaid"
+          }
+        },
+        {
+          "name": "Expire unpaid – customer token is not a secret → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{paymentsToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/payments/expire-unpaid"
+          }
+        },
+        {
+          "name": "Expire unpaid – Bearer secret (like Vercel Cron) → 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 (CRON_SECRET in .env must equal cronSecret)', () => pm.response.to.have.status(200));",
+                  "const summary = pm.response.json().data;",
+                  "pm.test('returns a summary', () => pm.expect(summary).to.have.keys('checked', 'cancelled', 'skipped'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": "{{baseUrl}}/payments/expire-unpaid"
+          }
+        },
+        {
+          "name": "Expire unpaid – POST with x-cron-secret → 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('nothing failed', () => pm.expect(pm.response.json().data.skipped).to.eql(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-cron-secret",
+                "value": "{{cronSecret}}"
+              }
+            ],
+            "url": "{{baseUrl}}/payments/expire-unpaid"
+          }
+        }
+      ]
     }
   ]
 }

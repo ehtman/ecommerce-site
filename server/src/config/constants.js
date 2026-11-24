@@ -135,3 +135,19 @@ export const PAYMENT_STATUS = Object.freeze({
   FAILED: 'failed',
   REFUNDED: 'refunded',
 });
+
+// Card payments (branch 08). Stripe works in the SMALLEST unit of a currency ("paisa" for
+// rupees, cents for dollars), so Rs 1,250 is sent to Stripe as 125000.
+export const PAYMENTS = Object.freeze({
+  PROVIDER: 'stripe', // the only payment provider we talk to (stored on the order)
+  CURRENCY: 'pkr', // ISO currency code in lower case, as Stripe expects
+  MINOR_UNITS_PER_RUPEE: 100, // 1 rupee = 100 paisa
+  // A CARD order that is still unpaid after this long is cancelled by the expiry job and
+  // its stock goes back on the shelf, so abandoned checkouts cannot block stock forever.
+  UNPAID_CARD_EXPIRY_MS: 30 * 60 * 1000, // 30 minutes
+  // Stripe events that mean "the money arrived" (async = slower methods that finish later)
+  PAID_EVENTS: Object.freeze([
+    'checkout.session.completed',
+    'checkout.session.async_payment_succeeded',
+  ]),
+});

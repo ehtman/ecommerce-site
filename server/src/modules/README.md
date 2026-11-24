@@ -25,6 +25,7 @@ Build order when writing a new module: **model → validation → service → co
 | [`wishlist/`](wishlist/README.md)     | A customer's saved products: idempotent add, max 100                                                |
 | [`coupons/`](coupons/README.md)       | Discount codes: customer preview on the cart, admin CRUD, atomic usage counter                      |
 | [`orders/`](orders/README.md)         | Checkout in one transaction, order history, cancel, admin status machine                            |
+| [`payments/`](payments/README.md)     | Card payments with Stripe: hosted checkout, signed webhook, expiry cron job                         |
 | `models.js`                           | Re-exports every model: `import { User } from '../models.js'`                                       |
 
 Each new branch adds a folder here, one line in `models.js` (if it has a model) and one line in `app.js`.

@@ -1,0 +1,28 @@
+meta {
+  name: Webhook fake signature 400
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/payments/webhook
+  body: json
+  auth: none
+}
+
+headers {
+  Stripe-Signature: t=1700000000,v1=0000000000000000000000000000000000000000000000000000000000000000
+}
+
+body:json {
+  {
+    "type": "checkout.session.completed",
+    "data": { "object": { "id": "cs_test_fake", "payment_status": "paid" } }
+  }
+}
+
+tests {
+  // Nobody can pretend to be Stripe: a valid signature needs our webhook secret
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("refused", function () { expect(res.body.message).to.match(/Invalid Stripe signature|not configured/); });
+}

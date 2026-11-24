@@ -8,6 +8,7 @@
 | **ApiError** | Our Error class that carries an HTTP status code (`utils/ApiError.js`). |
 | **asyncHandler** | Wrapper that sends errors from async controllers to the error handler. |
 | **Atlas** | MongoDB's hosted cloud database service. |
+| **At-least-once delivery** | A guarantee that a message arrives one or more times, so receivers must be idempotent. See [22](22-webhooks-signatures-idempotency.md). |
 | **Atomic conditional update** | One database operation that checks a condition and changes the document together (e.g. `stock >= qty` then `$inc`), so nothing can happen in between. See [20](20-transactions-and-race-conditions.md). |
 | **Atomic operation** | An operation nobody can see half-done: it happens completely or not at all. See [18](18-transactions-and-atomic-updates.md) and [19](19-coupons-money-math-and-atomic-counters.md) (conditional `$inc`). |
 | **Atomic update** | A condition and a change applied by the database in one step (`updateOne` + `$inc`), so concurrent requests can't oversell. See [16](16-catalog-queries.md). |
@@ -19,6 +20,7 @@
 | **Brute force** | Guessing passwords by trying very many. Stopped by rate limits. |
 | **Bruno** | Open-source API client; collections are plain files in git. |
 | **CDN** | Content Delivery Network: copies of files on servers worldwide, served from the nearest one. See [17](17-file-uploads-and-cdn.md). |
+| **Checkout Session** | Stripe's object for one hosted payment page; has an `id` (`cs_…`) and a `url`. See [22](22-webhooks-signatures-idempotency.md). |
 | **CI/CD** | Automatically testing (CI) and deploying (CD) on every push. |
 | **Cloudinary / publicId** | The image service we use / an image's name inside it (needed to delete it). See [17](17-file-uploads-and-cdn.md). |
 | **COD** | Cash on Delivery: the customer pays the courier; the order becomes paid when delivered. See [21](21-state-machines-and-snapshots.md). |
@@ -27,10 +29,12 @@
 | **Collection (Postman/Bruno)** | A saved, ordered set of API requests with tests. |
 | **Collection scan / IXSCAN** | Reading every document vs. using an index (`explain()`). See [16](16-catalog-queries.md). |
 | **Compound index** | One index over several fields, serving "filter on the first, sort on the next" queries. See [16](16-catalog-queries.md). |
+| **Constant-time comparison** | Comparing secrets in a way that takes the same time no matter where they differ (`crypto.timingSafeEqual`). See [22](22-webhooks-signatures-idempotency.md). |
 | **Controller** | Layer that turns an HTTP request into a service call and sends the response. |
 | **CORS** | Browser rule controlling which websites may call our API. |
 | **Coupon** | A code that gives a discount, e.g. `EID25`. Percentage or fixed amount, with rules for when and how often it works. See [19](19-coupons-money-math-and-atomic-counters.md). |
 | **Coverage** | How much of the code ran during tests. |
+| **Cron job** | A task a scheduler runs on a timetable (cron syntax like `0 3 * * *`). See [22](22-webhooks-signatures-idempotency.md). |
 | **Document** | One record in MongoDB (JSON-like). |
 | **dotenv** | Library that loads `.env` into `process.env`. |
 | **E2E test** | End-to-end test: the whole running system, like a real user. |
@@ -41,9 +45,12 @@
 | **Express** | Minimal Node.js web framework. |
 | **Factory (tests)** | Helper that creates test data (`createUser()`). |
 | **Fail fast** | Stop immediately with a clear error instead of failing later and confusingly. |
+| **Feature flag** | A setting that turns a feature on or off without changing code (`PAYMENT_CARD_ENABLED`). See [22](22-webhooks-signatures-idempotency.md). |
 | **Hash** | One-way fingerprint of data. Can't be reversed. |
 | **helmet** | Middleware that sets security-related HTTP headers. |
+| **HMAC** | A fingerprint of a message that can only be made with a secret key (e.g. HMAC-SHA256). See [22](22-webhooks-signatures-idempotency.md). |
 | **Hook (Mongoose)** | Code that runs automatically before/after an event (e.g. `pre('save')`). |
+| **Hosted checkout** | A payment page shown on the provider's own website, so the shop never handles card numbers. See [22](22-webhooks-signatures-idempotency.md). |
 | **HTTP** | The text protocol browsers and servers use to talk. |
 | **Husky** | Tool that runs scripts on git events (pre-commit). |
 | **iat / exp** | JWT "issued at" / "expires at" times, in seconds. |
@@ -64,6 +71,7 @@
 | **Mass assignment** | Saving every field the client sent, including ones it shouldn't control. |
 | **Middleware** | Function `(req, res, next)` that runs before the controller. |
 | **MIME type** | The declared content type of a file, e.g. `image/png` (a claim, not a proof). See [17](17-file-uploads-and-cdn.md). |
+| **Minor units** | The smallest unit of a currency (paisa, cents); payment APIs use whole numbers of them. See [22](22-webhooks-signatures-idempotency.md). |
 | **Model** | Mongoose schema + collection + methods. |
 | **Mongoose** | Library that adds schemas and helpers on top of MongoDB. |
 | **mongodb-memory-server** | Starts a real MongoDB in memory for tests. |
@@ -81,13 +89,16 @@
 | **Partial index** | An index that only contains documents matching a filter (`partialFilterExpression`). A unique partial index enforces "one default address per user". |
 | **Partial update** | An update where fields that aren't sent keep their old value (`PUT /users/profile`). |
 | **Payload (JWT)** | The middle part of a JWT holding the claims. |
+| **Payment provider** | A company (Stripe, PayPal, a bank gateway) that moves money from a card to the shop's account. See [22](22-webhooks-signatures-idempotency.md). |
 | **Prettier** | Automatic code formatter. |
 | **Public route** | A route that needs no token (`GET /api/categories`). Writes to the same resource stay admin-only. |
 | **Race condition** | A bug where the result depends on the timing of overlapping requests, e.g. two checkouts both taking the "last" coupon use. See [19](19-coupons-money-math-and-atomic-counters.md) and [20](20-transactions-and-race-conditions.md). |
 | **Rate limiting** | Capping requests per client per time window (429). |
+| **Raw body** | The exact bytes of a request body before JSON parsing; needed to check a signature. See [22](22-webhooks-signatures-idempotency.md). |
 | **RBAC** | Role-Based Access Control (customer / admin). |
 | **ReDoS** | A denial of service through a regular expression that takes very long to evaluate; prevented by escaping user text. See [16](16-catalog-queries.md). |
 | **Regression** | A bug in something that used to work. |
+| **Replay attack** | Re-sending a captured valid request later; blocked by signed timestamps with a short tolerance. See [22](22-webhooks-signatures-idempotency.md). |
 | **Replica set** | Several MongoDB servers with copies of the data; needed for transactions. |
 | **REST** | URL design style: resources as nouns, actions as HTTP methods. |
 | **Rollback** | Undoing every write of a transaction that failed (abort). See [18](18-transactions-and-atomic-updates.md). |
@@ -121,5 +132,7 @@
 | **Validation** | Checking input is acceptable before using it. |
 | **Validity window** | The time between `startsAt` and `expiresAt` in which a coupon (or offer, or token) works. See [19](19-coupons-money-math-and-atomic-counters.md). |
 | **Virtual (Mongoose)** | A field computed on demand, not stored, e.g. a category's `children`. |
+| **Webhook** | An HTTP request a provider's server sends to *your* URL when something happens ("reverse API call"). See [22](22-webhooks-signatures-idempotency.md). |
+| **Webhook signature** | An HMAC of the request body made with a shared secret; proves the webhook came from the provider and wasn't changed. See [22](22-webhooks-signatures-idempotency.md). |
 | **Whitelist (query)** | Reading only known query parameters and ignoring the rest. See [16](16-catalog-queries.md). |
 | **Write conflict** | MongoDB stopping one of two transactions that changed the same document; `withTransaction()` retries it. See [20](20-transactions-and-race-conditions.md). |

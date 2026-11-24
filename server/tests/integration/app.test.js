@@ -65,6 +65,9 @@ describe('App basics', () => {
         '/orders/{id}/cancel',
         '/admin/orders',
         '/admin/orders/{id}/status',
+        '/payments/checkout-session',
+        '/payments/webhook',
+        '/payments/expire-unpaid',
       ]),
     );
   });

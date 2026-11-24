@@ -19,12 +19,12 @@ Every step is a git **branch**. Each branch holds everything from the step befor
 |---|---|---|---|
 | 01 | `main` | Authentication + authorization (register, login, JWT, roles, email verify, password reset, Google login) | ✅ done |
 | 02 | `02-profile-addresses` | Profile editing, saved addresses (ownership checks) | ✅ done |
-| 03 | `03-categories` | Categories (first admin-only CRUD, slugs) | ⏳ planned |
-| 04 | `04-products-uploads` | Products, search/filter/pagination, image uploads (Cloudinary) | ⏳ planned |
-| 05 | `05-cart-wishlist` | Cart and wishlist, price calculation | ⏳ planned |
-| 06 | `06-coupons` | Discount coupons | ⏳ planned |
-| 07 | `07-orders` | Orders: MongoDB transactions, stock reservation, status flow | ⏳ planned |
-| 08 | `08-payments` | Stripe card payments + webhooks | ⏳ planned |
+| 03 | `03-categories` | Categories (first admin-only CRUD, slugs) | ✅ done |
+| 04 | `04-products-uploads` | Products, search/filter/pagination, image uploads (Cloudinary) | ✅ done |
+| 05 | `05-cart-wishlist` | Cart and wishlist, price calculation | ✅ done |
+| 06 | `06-coupons` | Discount coupons | ✅ done |
+| 07 | `07-orders` | Orders: MongoDB transactions, stock reservation, status flow | ✅ done |
+| 08 | `08-payments` | Stripe card payments + webhooks | ✅ done |
 | 09 | `09-reviews` | Product reviews (only after delivery) | ⏳ planned |
 | 10 | `10-admin` | Admin dashboard, reports, customer management | ⏳ planned |
 | 11 | `11-client-foundation-auth` | React app foundation + auth pages | ⏳ planned |
@@ -119,16 +119,36 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 12. [API design and docs](docs/concepts/12-api-design-and-docs.md)
 13. [System design baseline](docs/concepts/13-system-design-baseline.md)
 14. [Ownership: resource-level authorization (IDOR)](docs/concepts/14-authorization-ownership.md)
+15. [Slugs, and public vs admin APIs](docs/concepts/15-slugs-and-public-vs-admin-apis.md)
+16. [Catalog queries: pagination, filtering, sorting, text search, indexes, stock](docs/concepts/16-catalog-queries.md)
+17. [File uploads, multipart and a CDN (Cloudinary)](docs/concepts/17-file-uploads-and-cdn.md)
+18. [Transactions, atomic updates, upserts and idempotency](docs/concepts/18-transactions-and-atomic-updates.md)
+19. [Coupons: money math, validity windows and atomic counters](docs/concepts/19-coupons-money-math-and-atomic-counters.md)
+20. [Transactions, ACID and race conditions](docs/concepts/20-transactions-and-race-conditions.md)
+21. [State machines and snapshots](docs/concepts/21-state-machines-and-snapshots.md)
+22. [Webhooks, signatures and idempotency](docs/concepts/22-webhooks-signatures-idempotency.md)
 - [Glossary](docs/concepts/glossary.md)
 
 **Mind maps** (how to think while building)
 - [How to think about any module](docs/mind-maps/00-how-to-think.md)
 - [01 – Auth](docs/mind-maps/01-auth.md)
 - [02 – Profile & Addresses](docs/mind-maps/02-profile-addresses.md)
+- [03 – Categories](docs/mind-maps/03-categories.md)
+- [04 – Products & Uploads](docs/mind-maps/04-products-uploads.md)
+- [05 – Cart & Wishlist](docs/mind-maps/05-cart-wishlist.md)
+- [06 – Coupons](docs/mind-maps/06-coupons.md)
+- [07 – Orders](docs/mind-maps/07-orders.md)
+- [08 – Payments](docs/mind-maps/08-payments.md)
 
 **Modules**
 - [01 – Auth](docs/modules/01-auth.md)
 - [02 – Profile & Addresses](docs/modules/02-profile-addresses.md)
+- [03 – Categories](docs/modules/03-categories.md)
+- [04 – Products & Uploads](docs/modules/04-products-uploads.md)
+- [05 – Cart & Wishlist](docs/modules/05-cart-wishlist.md)
+- [06 – Coupons](docs/modules/06-coupons.md)
+- [07 – Orders](docs/modules/07-orders.md)
+- [08 – Payments](docs/modules/08-payments.md)
 
 **Testing**
 - [Testing guide (Jest, Postman/Newman, Bruno)](docs/testing/README.md)

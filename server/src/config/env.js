@@ -65,10 +65,19 @@ const env = {
   // Only the exact text "false" turns limits off (handy for repeated Postman runs and tests).
   RATE_LIMIT_ENABLED: process.env.RATE_LIMIT_ENABLED !== 'false',
 
-  // ---------- Payments ----------
-  // Only the exact text "true" turns card payments on. Until Stripe exists (branch 08)
-  // it stays off, and placing a CARD order is refused with a friendly 400.
+  // ---------- Card payments with Stripe (optional, branch 08) ----------
+  // A feature flag: only the exact text "true" turns card payments on. Off by default, so
+  // the shop works with Cash on Delivery alone until you have Stripe keys.
   PAYMENT_CARD_ENABLED: process.env.PAYMENT_CARD_ENABLED === 'true',
+  // Secret API key (sk_test_… in test mode). Lets OUR server talk to Stripe. Never send it
+  // to the browser: whoever has it can create charges and refunds on your account.
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+  // Webhook signing secret (whsec_…). Stripe signs every webhook with it; we check the
+  // signature so nobody else can pretend to be Stripe. See docs/concepts/22-*.md
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+  // Shared password the scheduler (Vercel Cron) sends to run the "expire unpaid orders"
+  // job. Empty = the job endpoint refuses every call.
+  CRON_SECRET: process.env.CRON_SECRET || '',
 };
 
 // CLIENT_URL may hold several URLs separated by commas (e.g. localhost + the live site).

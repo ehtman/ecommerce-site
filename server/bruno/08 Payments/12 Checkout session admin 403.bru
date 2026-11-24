@@ -1,0 +1,25 @@
+meta {
+  name: Checkout session admin 403
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/payments/checkout-session
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "orderId": "665f1c2e9b1e8a0012345678"
+  }
+}
+
+tests {
+  test("status is 403 (paying is a customer action)", function () { expect(res.status).to.equal(403); });
+}

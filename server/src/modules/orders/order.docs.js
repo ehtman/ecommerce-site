@@ -177,7 +177,7 @@ export default {
         tags: ['Orders'],
         summary: 'Place an order from my cart (verified email required)',
         description:
-          'The server reads the cart, reserves stock atomically, re-checks the coupon and calculates every price. Card payments are refused until branch 08 enables them.',
+          'The server reads the cart, reserves stock atomically, re-checks the coupon and calculates every price. CARD orders are refused while PAYMENT_CARD_ENABLED is off; paid ones are confirmed by the Stripe webhook (POST /api/payments/webhook).',
         security: secured,
         requestBody: {
           required: true,

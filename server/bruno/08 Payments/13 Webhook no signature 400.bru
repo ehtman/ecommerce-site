@@ -1,0 +1,22 @@
+meta {
+  name: Webhook no signature 400
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/payments/webhook
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "checkout.session.completed",
+    "data": { "object": { "id": "cs_test_fake", "payment_status": "paid" } }
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+}

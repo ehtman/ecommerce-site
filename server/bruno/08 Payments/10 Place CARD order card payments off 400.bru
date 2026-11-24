@@ -1,0 +1,31 @@
+meta {
+  name: Place CARD order card payments off 400
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{paymentsToken}}
+}
+
+body:json {
+  {
+    "addressId": "665f1c2e9b1e8a0012345678",
+    "paymentMethod": "CARD"
+  }
+}
+
+tests {
+  if (bru.getEnvVar("cardEnabled") === "true") {
+    test("cards on: unknown address 404", function () { expect(res.status).to.equal(404); });
+  } else {
+    test("status is 400", function () { expect(res.status).to.equal(400); });
+    test("card orders are refused", function () { expect(res.body.message).to.equal("Card payments are not available right now"); });
+  }
+}
