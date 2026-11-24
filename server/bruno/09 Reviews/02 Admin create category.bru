@@ -1,0 +1,32 @@
+meta {
+  name: Admin – create category
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Review Kitchen {{reviewStamp}}"
+  }
+}
+
+script:pre-request {
+  // This folder builds its OWN catalogue, customer and order, so it can run alone
+  bru.setEnvVar("reviewStamp", String(Date.now()));
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("reviewCategoryId", rb.data._id);
+}

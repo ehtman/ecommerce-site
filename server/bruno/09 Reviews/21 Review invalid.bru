@@ -1,0 +1,28 @@
+meta {
+  name: Review with rating 6 and short comment → 400
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/products/{{reviewProductId}}/reviews
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+body:json {
+  {
+    "rating": 6,
+    "comment": "meh"
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("two field errors", function () { expect(rb.errors.length).to.eql(2); });
+}

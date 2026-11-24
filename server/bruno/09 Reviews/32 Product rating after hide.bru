@@ -1,0 +1,17 @@
+meta {
+  name: Hidden review no longer counts (★ 0, 0 reviews)
+  type: http
+  seq: 32
+}
+
+get {
+  url: {{baseUrl}}/products/{{reviewProductSlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("ratingCount 0", function () { expect(rb.data.ratingCount).to.eql(0); });
+}

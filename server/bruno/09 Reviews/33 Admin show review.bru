@@ -1,0 +1,27 @@
+meta {
+  name: Admin – show the review again
+  type: http
+  seq: 33
+}
+
+patch {
+  url: {{baseUrl}}/reviews/{{reviewId}}/visibility
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "isVisible": true
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("visible", function () { expect(rb.data.isVisible).to.eql(true); });
+}

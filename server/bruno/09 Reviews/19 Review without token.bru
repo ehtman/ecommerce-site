@@ -1,0 +1,23 @@
+meta {
+  name: Review without token → 401
+  type: http
+  seq: 19
+}
+
+post {
+  url: {{baseUrl}}/products/{{reviewProductId}}/reviews
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "rating": 5,
+    "title": "Boils fast",
+    "comment": "Boils a full kettle in about three minutes. Very happy."
+  }
+}
+
+tests {
+  test("status is 401", function () { expect(res.status).to.equal(401); });
+}

@@ -13,7 +13,7 @@
  * and docs/concepts/17-file-uploads-and-cdn.md (images on Cloudinary).
  */
 import mongoose from 'mongoose';
-import { Product, Category, Cart, Wishlist, Order } from '../models.js';
+import { Product, Category, Cart, Wishlist, Order, Review } from '../models.js';
 import ApiError from '../../utils/ApiError.js';
 import { getPagination, buildMeta } from '../../utils/pagination.js';
 import { deleteImage } from '../../config/cloudinary.js';
@@ -234,7 +234,7 @@ export async function updateProduct(id, body) {
 }
 
 /**
- * Delete a product, its images, and its lines in every cart and wishlist.
+ * Delete a product, its images, its reviews, and its lines in every cart and wishlist.
  * BR-10: a product that appears in an order is only HIDDEN (isActive = false), so order
  * history never points at a missing product.
  * @returns {{ softDeleted: boolean }} true = hidden, false = really deleted
@@ -250,14 +250,15 @@ export async function deleteProduct(id) {
     await product.save({ validateModifiedOnly: true });
     return { softDeleted: true };
   }
-  // Branch 09: also delete its reviews.
 
   await product.deleteOne();
   // Branch 05: nobody's cart or wishlist may keep pointing at a deleted product.
   // updateMany + $pull removes the matching line/id from EVERY cart/wishlist in one query each.
+  // Branch 09: its reviews go too (deleteMany skips the rating hooks: the product is gone).
   await Promise.all([
     Cart.updateMany({ 'items.product': id }, { $pull: { items: { product: id } } }),
     Wishlist.updateMany({ products: id }, { $pull: { products: id } }),
+    Review.deleteMany({ product: id }),
   ]);
   // Images last: a failure here never undoes the delete (deleteImage never throws)
   await Promise.all(product.images.map((img) => deleteImage(img.publicId)));

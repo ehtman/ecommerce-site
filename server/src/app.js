@@ -34,6 +34,7 @@ import couponRoutes from './modules/coupons/coupon.routes.js';
 import orderRoutes, { adminOrderRoutes } from './modules/orders/order.routes.js';
 import paymentRoutes from './modules/payments/payment.routes.js';
 import { stripeWebhook } from './modules/payments/payment.controller.js';
+import reviewRoutes from './modules/reviews/review.routes.js';
 
 const app = express();
 
@@ -97,6 +98,7 @@ app.use('/api/orders', orderRoutes);
 // Branch 10 moves the admin order routes into /api/admin (admin.routes.js), same URLs
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/reviews', reviewRoutes); // edit/delete/moderate one review (list/create: /api/products/:id/reviews)
 
 // ---------- Fallbacks (must be LAST) ----------
 app.use(notFound); // no route matched → 404

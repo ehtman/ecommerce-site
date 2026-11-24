@@ -1,0 +1,26 @@
+meta {
+  name: Customer – add the product to the cart
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+body:json {
+  {
+    "productId": "{{reviewProductId}}",
+    "quantity": 1
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}

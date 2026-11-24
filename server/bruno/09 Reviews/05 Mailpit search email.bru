@@ -1,0 +1,22 @@
+meta {
+  name: Mailpit – find the newest email to this customer
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/search?query=to:{{reviewCustomerEmail}}
+  body: none
+  auth: none
+}
+
+docs {
+  Searches Mailpit by recipient (safe when other test runs send mail at the same time) and keeps the NEWEST message id.
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("an email was found", function () { expect(rb.messages.length > 0).to.eql(true); });
+  bru.setEnvVar("reviewMailId", rb.messages[0].ID);
+}

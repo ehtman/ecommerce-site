@@ -1,0 +1,24 @@
+meta {
+  name: Login – customer
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{reviewCustomerEmail}}",
+    "password": "secret123"
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  bru.setEnvVar("reviewCustomerToken", rb.data.token);
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Register – fresh customer
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Review Tester",
+    "email": "{{reviewCustomerEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  bru.setEnvVar("reviewCustomerEmail", 'postman.review' + Date.now() + '@example.com');
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+}

@@ -1,0 +1,29 @@
+meta {
+  name: Customer – place COD order
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+body:json {
+  {
+    "addressId": "{{reviewAddressId}}",
+    "paymentMethod": "COD"
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("order starts pending", function () { expect(rb.data.status).to.eql("pending"); });
+  bru.setEnvVar("reviewOrderId", rb.data._id);
+}

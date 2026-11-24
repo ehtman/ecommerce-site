@@ -25,7 +25,7 @@ Every step is a git **branch**. Each branch holds everything from the step befor
 | 06 | `06-coupons` | Discount coupons | ✅ done |
 | 07 | `07-orders` | Orders: MongoDB transactions, stock reservation, status flow | ✅ done |
 | 08 | `08-payments` | Stripe card payments + webhooks | ✅ done |
-| 09 | `09-reviews` | Product reviews (only after delivery) | ⏳ planned |
+| 09 | `09-reviews` | Product reviews (only after delivery) | ✅ done |
 | 10 | `10-admin` | Admin dashboard, reports, customer management | ⏳ planned |
 | 11 | `11-client-foundation-auth` | React app foundation + auth pages | ⏳ planned |
 | 12 | `12-client-account` | Account pages (profile, addresses) | ⏳ planned |
@@ -127,6 +127,7 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 20. [Transactions, ACID and race conditions](docs/concepts/20-transactions-and-race-conditions.md)
 21. [State machines and snapshots](docs/concepts/21-state-machines-and-snapshots.md)
 22. [Webhooks, signatures and idempotency](docs/concepts/22-webhooks-signatures-idempotency.md)
+23. [Ratings: aggregation pipelines, denormalized counters, compound unique indexes, moderation](docs/concepts/23-ratings-aggregation-moderation.md)
 - [Glossary](docs/concepts/glossary.md)
 
 **Mind maps** (how to think while building)
@@ -139,6 +140,7 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 - [06 – Coupons](docs/mind-maps/06-coupons.md)
 - [07 – Orders](docs/mind-maps/07-orders.md)
 - [08 – Payments](docs/mind-maps/08-payments.md)
+- [09 – Reviews](docs/mind-maps/09-reviews.md)
 
 **Modules**
 - [01 – Auth](docs/modules/01-auth.md)
@@ -149,6 +151,7 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 - [06 – Coupons](docs/modules/06-coupons.md)
 - [07 – Orders](docs/modules/07-orders.md)
 - [08 – Payments](docs/modules/08-payments.md)
+- [09 – Reviews](docs/modules/09-reviews.md)
 
 **Testing**
 - [Testing guide (Jest, Postman/Newman, Bruno)](docs/testing/README.md)

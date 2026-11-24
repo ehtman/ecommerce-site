@@ -1,0 +1,33 @@
+meta {
+  name: Create review (4 stars) → 201
+  type: http
+  seq: 22
+}
+
+post {
+  url: {{baseUrl}}/products/{{reviewProductId}}/reviews
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+body:json {
+  {
+    "rating": 4,
+    "title": "Boils fast",
+    "comment": "Boils a full kettle in about three minutes. Very happy.",
+    "isVisible": false
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("rating saved", function () { expect(rb.data.rating).to.eql(4); });
+  test("isVisible from the body is ignored", function () { expect(rb.data.isVisible).to.eql(true); });
+  test("linked to the delivered order", function () { expect(rb.data.order).to.eql(bru.getEnvVar("reviewOrderId")); });
+  bru.setEnvVar("reviewId", rb.data._id);
+}

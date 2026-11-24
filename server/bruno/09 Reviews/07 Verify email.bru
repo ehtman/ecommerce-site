@@ -1,0 +1,21 @@
+meta {
+  name: Verify email
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/auth/verify-email
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "token": "{{reviewVerifyToken}}"
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}

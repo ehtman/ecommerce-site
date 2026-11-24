@@ -1,0 +1,22 @@
+meta {
+  name: Admin – moderation list for this product
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{baseUrl}}/reviews/admin?product={{reviewProductId}}&rating=2
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("finds the review", function () { expect(rb.data[0]._id).to.eql(bru.getEnvVar("reviewId")); });
+  test("admin sees the email", function () { expect(rb.data[0].user.email).to.eql(bru.getEnvVar("reviewCustomerEmail")); });
+}
