@@ -1,0 +1,19 @@
+meta {
+  name: Mailpit – read that email and copy the token
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/message/{{reviewMailId}}
+  body: none
+  auth: none
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("sent to our customer", function () { expect(rb.To[0].Address).to.eql(bru.getEnvVar("reviewCustomerEmail")); });
+  test("contains a token link", function () { expect(/token=[a-f0-9]+/.test(rb.Text || "")).to.eql(true); });
+  bru.setEnvVar("reviewVerifyToken", (rb.Text || "").match(/token=([a-f0-9]+)/)[1]);
+}

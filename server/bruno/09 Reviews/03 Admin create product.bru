@@ -1,0 +1,41 @@
+meta {
+  name: Admin – create product
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "name": "Review Kettle {{reviewStamp}}",
+    "description": "A shiny steel kettle that boils water fast. Used by the reviews folder.",
+    "brand": "ShopEase",
+    "sku": "RV-{{reviewStamp}}",
+    "price": 2500,
+    "stock": 10,
+    "category": "{{reviewCategoryId}}",
+    "images": [
+      {
+        "url": "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+        "publicId": "demo/sample"
+      }
+    ]
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  test("a new product starts with no rating", function () { expect(rb.data.ratingCount).to.eql(0); });
+  bru.setEnvVar("reviewProductId", rb.data._id);
+  bru.setEnvVar("reviewProductSlug", rb.data.slug);
+}

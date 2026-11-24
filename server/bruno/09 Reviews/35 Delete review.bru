@@ -1,0 +1,19 @@
+meta {
+  name: Delete my review
+  type: http
+  seq: 35
+}
+
+delete {
+  url: {{baseUrl}}/reviews/{{reviewId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}

@@ -4,6 +4,27 @@ One entry per branch. Each entry says what the branch added or changed compared 
 
 ---
 
+## 09 – reviews (`09-reviews`)
+
+Ported from the reference app's `reviews` module, adapted to this repo's conventions.
+
+### Added
+- Reviews module: `GET /api/products/:id/reviews` (public, paginated, visible only), `GET /api/products/:id/reviews/eligibility`, `POST /api/products/:id/reviews` (customer with a DELIVERED order containing the product, one review per product), `PUT /api/reviews/:id` (author), `DELETE /api/reviews/:id` (author or admin), moderation `GET /api/reviews/admin` and `PATCH /api/reviews/:id/visibility` (admin).
+- Review model with the compound unique index `{ product, user }` and an aggregation pipeline that recalculates the denormalized `Product.ratingAverage` / `ratingCount` after every create, edit, hide/show and delete (Mongoose post hooks). Hidden reviews don't count.
+- `REVIEW` constants (rating range, title/comment lengths, page sizes).
+- OpenAPI tag **Reviews**; Postman + Bruno folder **09 Reviews** (self-contained: catalogue → customer → COD order → delivered via `PATCH /api/admin/orders/:id/status` → review → moderation); `createReview` factory.
+- Tests: 96 new (1020 in total), incl. a parallel duplicate-review race (`[201, 409]`) and exact rating recalculation.
+- Docs: module guide 09, mind map 09, concept [23 – Ratings: aggregation pipelines, denormalized counters, compound unique indexes, moderation](docs/concepts/23-ratings-aggregation-moderation.md).
+
+### Changed
+- `DELETE /api/products/:id` (hard delete) also deletes the product's reviews (as in the reference).
+
+### Changed (compared with the reference)
+- Moderation routes under `/api/reviews` (the admin aliases `/api/admin/reviews` arrive with branch 10).
+- List and eligibility answer 404 for a product id that doesn't exist; a duplicate-key race (E11000) gets the same 409; `PUT` with an empty `title` removes it; the admin list validates its filters (400).
+
+---
+
 ## 08 – payments (`08-payments`)
 
 Ported from the reference app's `payments` module, adapted to this repo's conventions.

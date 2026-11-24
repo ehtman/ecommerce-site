@@ -6995,6 +6995,1067 @@
           }
         }
       ]
+    },
+    {
+      "name": "09 Reviews",
+      "description": "Self-contained: the admin creates a category and a product; a fresh customer registers and verifies (Mailpit search by recipient, newest message), adds an address, fills the cart and places a COD order; the admin moves the order pending → confirmed → processing → shipped → delivered; only then may the customer review. Covers 401/403/400/409, the denormalized rating on the product after create/edit/hide/delete, and admin moderation. Needs: API running, Mailpit running, admin seeded, RATE_LIMIT_ENABLED=false.",
+      "item": [
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('adminToken', rb.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin – create category",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// This folder builds its OWN catalogue, customer and order, so it can run alone",
+                  "pm.environment.set('reviewStamp', String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('reviewCategoryId', rb.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Review Kitchen {{reviewStamp}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin – create product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('a new product starts with no rating', () => pm.expect(rb.data.ratingCount).to.eql(0));",
+                  "pm.environment.set('reviewProductId', rb.data._id);",
+                  "pm.environment.set('reviewProductSlug', rb.data.slug);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Review Kettle {{reviewStamp}}\",\n  \"description\": \"A shiny steel kettle that boils water fast. Used by the reviews folder.\",\n  \"brand\": \"ShopEase\",\n  \"sku\": \"RV-{{reviewStamp}}\",\n  \"price\": 2500,\n  \"stock\": 10,\n  \"category\": \"{{reviewCategoryId}}\",\n  \"images\": [\n    {\n      \"url\": \"https://res.cloudinary.com/demo/image/upload/sample.jpg\",\n      \"publicId\": \"demo/sample\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Register – fresh customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('reviewCustomerEmail', 'postman.review' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 201', () => pm.response.to.have.status(201));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Review Tester\",\n  \"email\": \"{{reviewCustomerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mailpit – find the newest email to this customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('an email was found', () => pm.expect(rb.messages.length > 0).to.eql(true));",
+                  "pm.environment.set('reviewMailId', rb.messages[0].ID);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/search?query=to:{{reviewCustomerEmail}}",
+            "description": "Searches Mailpit by recipient (safe when other test runs send mail at the same time) and keeps the NEWEST message id."
+          }
+        },
+        {
+          "name": "Mailpit – read that email and copy the token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('sent to our customer', () => pm.expect(rb.To[0].Address).to.eql(pm.environment.get('reviewCustomerEmail')));",
+                  "pm.test('contains a token link', () => pm.expect(/token=[a-f0-9]+/.test(rb.Text || \"\")).to.eql(true));",
+                  "pm.environment.set('reviewVerifyToken', (rb.Text || \"\").match(/token=([a-f0-9]+)/)[1]);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{mailpitUrl}}/api/v1/message/{{reviewMailId}}"
+          }
+        },
+        {
+          "name": "Verify email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/verify-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{reviewVerifyToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login – customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('reviewCustomerToken', rb.data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{reviewCustomerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer – add address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('reviewAddressId', rb.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/addresses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Review Tester\",\n  \"phone\": \"03001234567\",\n  \"addressLine1\": \"House 12, Street 4, Gulberg III\",\n  \"city\": \"Lahore\",\n  \"province\": \"Punjab\",\n  \"postalCode\": \"54000\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer – add the product to the cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cart/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{reviewProductId}}\",\n  \"quantity\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer – place COD order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('order starts pending', () => pm.expect(rb.data.status).to.eql(\"pending\"));",
+                  "pm.environment.set('reviewOrderId', rb.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"addressId\": \"{{reviewAddressId}}\",\n  \"paymentMethod\": \"COD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eligibility – not delivered yet → canReview false",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('cannot review yet', () => pm.expect(rb.data.canReview).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews/eligibility"
+          }
+        },
+        {
+          "name": "Review before delivery → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Boils fast\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin – move order to confirmed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('order is confirmed', () => pm.expect(rb.data.status).to.eql(\"confirmed\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/orders/{{reviewOrderId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin – move order to processing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('order is processing', () => pm.expect(rb.data.status).to.eql(\"processing\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/orders/{{reviewOrderId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"processing\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin – move order to shipped",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('order is shipped', () => pm.expect(rb.data.status).to.eql(\"shipped\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/orders/{{reviewOrderId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"shipped\",\n  \"trackingNumber\": \"TRK-REVIEW-1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin – move order to delivered",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('order is delivered', () => pm.expect(rb.data.status).to.eql(\"delivered\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/orders/{{reviewOrderId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"delivered\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Eligibility – delivered → canReview true",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('can review now', () => pm.expect(rb.data.canReview).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews/eligibility"
+          }
+        },
+        {
+          "name": "Review without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Boils fast\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin cannot write a review → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Boils fast\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Review with rating 6 and short comment → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('two field errors', () => pm.expect(rb.errors.length).to.eql(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 6,\n  \"comment\": \"meh\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create review (4 stars) → 201",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('rating saved', () => pm.expect(rb.data.rating).to.eql(4));",
+                  "pm.test('isVisible from the body is ignored', () => pm.expect(rb.data.isVisible).to.eql(true));",
+                  "pm.test('linked to the delivered order', () => pm.expect(rb.data.order).to.eql(pm.environment.get('reviewOrderId')));",
+                  "pm.environment.set('reviewId', rb.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"title\": \"Boils fast\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\",\n  \"isVisible\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Second review of the same product → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 409', () => pm.response.to.have.status(409));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 1,\n  \"title\": \"Boils fast\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List product reviews (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('one review', () => pm.expect(rb.meta.total).to.eql(1));",
+                  "pm.test('author name is shown', () => pm.expect(rb.data[0].user.name).to.eql(\"Review Tester\"));",
+                  "pm.test('author email is NOT shown', () => pm.expect(rb.data[0].user.email).to.eql(undefined));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews?page=1&limit=5"
+          }
+        },
+        {
+          "name": "Product page shows ★ 4 (1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ratingAverage 4', () => pm.expect(rb.data.ratingAverage).to.eql(4));",
+                  "pm.test('ratingCount 1', () => pm.expect(rb.data.ratingCount).to.eql(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{reviewProductSlug}}"
+          }
+        },
+        {
+          "name": "Edit my review (2 stars)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('rating changed', () => pm.expect(rb.data.rating).to.eql(2));",
+                  "pm.test('empty title removed it', () => pm.expect(rb.data.title).to.eql(undefined));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/{{reviewId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 2,\n  \"title\": \"\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin cannot edit a review → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/{{reviewId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Boils fast\",\n  \"comment\": \"Boils a full kettle in about three minutes. Very happy.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Product page shows ★ 2 (1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ratingAverage 2', () => pm.expect(rb.data.ratingAverage).to.eql(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{reviewProductSlug}}"
+          }
+        },
+        {
+          "name": "Moderation list as customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/admin"
+          }
+        },
+        {
+          "name": "Admin – moderation list for this product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('finds the review', () => pm.expect(rb.data[0]._id).to.eql(pm.environment.get('reviewId')));",
+                  "pm.test('admin sees the email', () => pm.expect(rb.data[0].user.email).to.eql(pm.environment.get('reviewCustomerEmail')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/admin?product={{reviewProductId}}&rating=2"
+          }
+        },
+        {
+          "name": "Admin – hide the review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('hidden', () => pm.expect(rb.data.isVisible).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/{{reviewId}}/visibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Hidden review no longer counts (★ 0, 0 reviews)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ratingCount 0', () => pm.expect(rb.data.ratingCount).to.eql(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{reviewProductSlug}}"
+          }
+        },
+        {
+          "name": "Admin – show the review again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('visible', () => pm.expect(rb.data.isVisible).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/{{reviewId}}/visibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isVisible\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete a review that does not exist → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/665f1c2e9b1e8a0012345678"
+          }
+        },
+        {
+          "name": "Delete my review",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{reviewCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/reviews/{{reviewId}}"
+          }
+        },
+        {
+          "name": "List after delete is empty",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rb = pm.response.json(); // rb = response body",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('no reviews', () => pm.expect(rb.meta.total).to.eql(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{reviewProductId}}/reviews"
+          }
+        }
+      ]
     }
   ]
 }

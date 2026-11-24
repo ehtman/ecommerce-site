@@ -1,0 +1,32 @@
+meta {
+  name: Customer – add address
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/addresses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+body:json {
+  {
+    "fullName": "Review Tester",
+    "phone": "03001234567",
+    "addressLine1": "House 12, Street 4, Gulberg III",
+    "city": "Lahore",
+    "province": "Punjab",
+    "postalCode": "54000"
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("reviewAddressId", rb.data._id);
+}

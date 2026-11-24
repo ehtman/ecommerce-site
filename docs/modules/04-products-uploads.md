@@ -249,8 +249,8 @@ Manual / E2E (server running, admin seeded, `RATE_LIMIT_ENABLED=false`; Cloudina
 | `DELETE /uploads/image` accepted any publicId                                    | Must start with `shopease/` (400 otherwise)                                                                        | Can't delete other files of the account |
 | `MulterError` mapping without `errors`                                           | `errors: [{ field, message }]`                                                                                     | Same shape as other 400s                |
 | Cloudinary SDK called directly                                                   | Through `cloudinaryClient`                                                                                         | Offline tests                           |
-| `deleteProduct` soft-deletes when orders exist; cleans carts, wishlists, reviews | Soft delete when orders exist (since 07); carts/wishlists cleaned (since 05); reviews: `// Branch 09` comment      | Those modules don't exist yet           |
-| Nested review routes in `product.routes.js`                                      | Comment `// Branch 09:`                                                                                            | Reviews arrive in branch 09             |
+| `deleteProduct` soft-deletes when orders exist; cleans carts, wishlists, reviews | Soft delete when orders exist (since 07); carts/wishlists cleaned (since 05); reviews deleted (since 09)           | Those modules don't exist yet           |
+| Nested review routes in `product.routes.js`                                      | Added in branch 09 (nested routes)                                                                                 | –                                       |
 | Brands sorted with `sort()`                                                      | `localeCompare`                                                                                                    | Correct A→Z for mixed case              |
 
 ## Exercises

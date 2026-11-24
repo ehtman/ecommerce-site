@@ -1,0 +1,30 @@
+meta {
+  name: Edit my review (2 stars)
+  type: http
+  seq: 26
+}
+
+put {
+  url: {{baseUrl}}/reviews/{{reviewId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+body:json {
+  {
+    "rating": 2,
+    "title": "",
+    "comment": "Boils a full kettle in about three minutes. Very happy."
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("rating changed", function () { expect(rb.data.rating).to.eql(2); });
+  test("empty title removed it", function () { expect(rb.data.title).to.eql(undefined); });
+}

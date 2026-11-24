@@ -1,0 +1,19 @@
+meta {
+  name: Moderation list as customer → 403
+  type: http
+  seq: 29
+}
+
+get {
+  url: {{baseUrl}}/reviews/admin
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+tests {
+  test("status is 403", function () { expect(res.status).to.equal(403); });
+}

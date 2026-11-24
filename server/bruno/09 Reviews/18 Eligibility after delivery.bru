@@ -1,0 +1,21 @@
+meta {
+  name: Eligibility – delivered → canReview true
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/products/{{reviewProductId}}/reviews/eligibility
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{reviewCustomerToken}}
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("can review now", function () { expect(rb.data.canReview).to.eql(true); });
+}

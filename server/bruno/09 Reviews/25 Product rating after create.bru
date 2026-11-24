@@ -1,0 +1,18 @@
+meta {
+  name: Product page shows ★ 4 (1)
+  type: http
+  seq: 25
+}
+
+get {
+  url: {{baseUrl}}/products/{{reviewProductSlug}}
+  body: none
+  auth: none
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("ratingAverage 4", function () { expect(rb.data.ratingAverage).to.eql(4); });
+  test("ratingCount 1", function () { expect(rb.data.ratingCount).to.eql(1); });
+}

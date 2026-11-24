@@ -1,0 +1,27 @@
+meta {
+  name: Admin – move order to processing
+  type: http
+  seq: 15
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{reviewOrderId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "processing"
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("order is processing", function () { expect(rb.data.status).to.eql("processing"); });
+}

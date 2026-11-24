@@ -16,6 +16,7 @@ import {
   Wishlist,
   Coupon,
   Order,
+  Review,
 } from '../../src/modules/models.js';
 import { calcTotals } from '../../src/utils/pricing.js';
 import generateToken from '../../src/utils/generateToken.js';
@@ -235,4 +236,24 @@ export async function deliverOrder(order) {
   doc.trackingNumber = doc.trackingNumber || 'TRACK-TEST';
   doc.statusHistory.push({ status: 'delivered', note: 'Delivered (test factory)' });
   return doc.save();
+}
+
+/* ---------- 09 Reviews ---------- */
+/**
+ * Saves a review by `user` for `product` directly in the database (skips the HTTP rules).
+ * A review needs a proof of purchase, so unless `overrides.order` is given this first
+ * creates a DELIVERED order of that product for the user (the real-life precondition).
+ * Saving runs the model hook, so the product's ratingAverage/ratingCount update too.
+ */
+export async function createReview(user, product, overrides = {}) {
+  const order = overrides.order || (await deliverOrder(await createOrder(user, { product })))._id;
+  return Review.create({
+    rating: 5,
+    title: 'Great value',
+    comment: 'Exactly as described and arrived quickly.',
+    ...overrides,
+    user: user._id,
+    product: product._id,
+    order,
+  });
 }

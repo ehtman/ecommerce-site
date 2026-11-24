@@ -5,7 +5,7 @@ passes through: middleware, validation, controller, service, database, emails, e
 every error exit (`ApiError` → `errorHandler`) and the final response.
 
 Diagrams are Mermaid: GitHub and VS Code (with a Mermaid preview extension) draw them automatically.
-This index grows with every branch. It lists the flows that exist up to **08-payments**.
+This index grows with every branch. It lists the flows that exist up to **09-reviews**.
 
 | Module | Endpoint / action | Flow |
 |---|---|---|
@@ -66,3 +66,10 @@ This index grows with every branch. It lists the flows that exist up to **08-pay
 | payments | POST /api/payments/checkout-session | [create-checkout-session](payments/create-checkout-session.md) |
 | payments | POST /api/payments/webhook | [stripe-webhook](payments/stripe-webhook.md) |
 | payments | GET /api/payments/expire-unpaid, POST /api/payments/expire-unpaid | [expire-unpaid-orders](payments/expire-unpaid-orders.md) |
+| reviews | GET /api/products/:id/reviews | [list-product-reviews](reviews/list-product-reviews.md) |
+| reviews | GET /api/products/:id/reviews/eligibility | [check-review-eligibility](reviews/check-review-eligibility.md) |
+| reviews | POST /api/products/:id/reviews | [create-review](reviews/create-review.md) |
+| reviews | PUT /api/reviews/:id | [update-review](reviews/update-review.md) |
+| reviews | DELETE /api/reviews/:id | [delete-review](reviews/delete-review.md) |
+| reviews | GET /api/reviews/admin | [admin-list-reviews](reviews/admin-list-reviews.md) |
+| reviews | PATCH /api/reviews/:id/visibility | [set-review-visibility](reviews/set-review-visibility.md) |

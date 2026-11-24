@@ -68,6 +68,11 @@ describe('App basics', () => {
         '/payments/checkout-session',
         '/payments/webhook',
         '/payments/expire-unpaid',
+        '/products/{id}/reviews',
+        '/products/{id}/reviews/eligibility',
+        '/reviews/admin',
+        '/reviews/{id}',
+        '/reviews/{id}/visibility',
       ]),
     );
   });

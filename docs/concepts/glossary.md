@@ -4,6 +4,7 @@
 |---|---|
 | **ACID** | Atomicity, Consistency, Isolation, Durability: the promises a transaction makes. See [20](20-transactions-and-race-conditions.md). |
 | **`$addToSet` / `$pull`** | MongoDB operators: add a value to an array only if missing / remove matching values. See [18](18-transactions-and-atomic-updates.md). |
+| **Aggregation pipeline** | A list of stages (`$match`, `$group`, `$sort`…) that MongoDB runs inside the database to calculate results instead of returning raw documents. See [23](23-ratings-aggregation-moderation.md). |
 | **API** | A set of URLs a program can call to use our system. |
 | **ApiError** | Our Error class that carries an HTTP status code (`utils/ApiError.js`). |
 | **asyncHandler** | Wrapper that sends errors from async controllers to the error handler. |
@@ -29,12 +30,14 @@
 | **Collection (Postman/Bruno)** | A saved, ordered set of API requests with tests. |
 | **Collection scan / IXSCAN** | Reading every document vs. using an index (`explain()`). See [16](16-catalog-queries.md). |
 | **Compound index** | One index over several fields, serving "filter on the first, sort on the next" queries. See [16](16-catalog-queries.md). |
+| **Compound unique index** | An index over several fields that refuses two documents with the same *combination* of values, e.g. one review per `{ product, user }`. See [23](23-ratings-aggregation-moderation.md). |
 | **Constant-time comparison** | Comparing secrets in a way that takes the same time no matter where they differ (`crypto.timingSafeEqual`). See [22](22-webhooks-signatures-idempotency.md). |
 | **Controller** | Layer that turns an HTTP request into a service call and sends the response. |
 | **CORS** | Browser rule controlling which websites may call our API. |
 | **Coupon** | A code that gives a discount, e.g. `EID25`. Percentage or fixed amount, with rules for when and how often it works. See [19](19-coupons-money-math-and-atomic-counters.md). |
 | **Coverage** | How much of the code ran during tests. |
 | **Cron job** | A task a scheduler runs on a timetable (cron syntax like `0 3 * * *`). See [22](22-webhooks-signatures-idempotency.md). |
+| **Denormalized counter** | A calculated copy of data stored for fast reads (e.g. `ratingAverage` on the product), kept in sync on every write. See [23](23-ratings-aggregation-moderation.md). |
 | **Document** | One record in MongoDB (JSON-like). |
 | **dotenv** | Library that loads `.env` into `process.env`. |
 | **E2E test** | End-to-end test: the whole running system, like a real user. |
@@ -73,6 +76,7 @@
 | **MIME type** | The declared content type of a file, e.g. `image/png` (a claim, not a proof). See [17](17-file-uploads-and-cdn.md). |
 | **Minor units** | The smallest unit of a currency (paisa, cents); payment APIs use whole numbers of them. See [22](22-webhooks-signatures-idempotency.md). |
 | **Model** | Mongoose schema + collection + methods. |
+| **Moderation** | The shop controlling what user content the public sees (hide/show/delete reviews). See [23](23-ratings-aggregation-moderation.md). |
 | **Mongoose** | Library that adds schemas and helpers on top of MongoDB. |
 | **mongodb-memory-server** | Starts a real MongoDB in memory for tests. |
 | **Multer** | Express middleware that parses multipart bodies. See [17](17-file-uploads-and-cdn.md). |
@@ -90,6 +94,7 @@
 | **Partial update** | An update where fields that aren't sent keep their old value (`PUT /users/profile`). |
 | **Payload (JWT)** | The middle part of a JWT holding the claims. |
 | **Payment provider** | A company (Stripe, PayPal, a bank gateway) that moves money from a card to the shop's account. See [22](22-webhooks-signatures-idempotency.md). |
+| **Post hook (Mongoose)** | A function that runs after a database operation succeeded (`schema.post('save', fn)`). See [23](23-ratings-aggregation-moderation.md). |
 | **Prettier** | Automatic code formatter. |
 | **Public route** | A route that needs no token (`GET /api/categories`). Writes to the same resource stay admin-only. |
 | **Race condition** | A bug where the result depends on the timing of overlapping requests, e.g. two checkouts both taking the "last" coupon use. See [19](19-coupons-money-math-and-atomic-counters.md) and [20](20-transactions-and-race-conditions.md). |
@@ -131,6 +136,7 @@
 | **Upsert** | An update that inserts the document when nothing matches (`{ upsert: true }`). See [18](18-transactions-and-atomic-updates.md). |
 | **Validation** | Checking input is acceptable before using it. |
 | **Validity window** | The time between `startsAt` and `expiresAt` in which a coupon (or offer, or token) works. See [19](19-coupons-money-math-and-atomic-counters.md). |
+| **Verified buyer** | A reviewer with a delivered order containing the product. See [23](23-ratings-aggregation-moderation.md). |
 | **Virtual (Mongoose)** | A field computed on demand, not stored, e.g. a category's `children`. |
 | **Webhook** | An HTTP request a provider's server sends to *your* URL when something happens ("reverse API call"). See [22](22-webhooks-signatures-idempotency.md). |
 | **Webhook signature** | An HMAC of the request body made with a shared secret; proves the webhook came from the provider and wasn't changed. See [22](22-webhooks-signatures-idempotency.md). |

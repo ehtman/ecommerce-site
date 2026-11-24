@@ -151,3 +151,17 @@ export const PAYMENTS = Object.freeze({
     'checkout.session.async_payment_succeeded',
   ]),
 });
+
+// Review rules (branch 09). One object, so the model, the validation rules and the docs
+// all read the SAME numbers: change "comment max 1000" here and every layer follows.
+export const REVIEW = Object.freeze({
+  RATING_MIN: 1, // star ratings are whole numbers from 1…
+  RATING_MAX: 5, // …to 5
+  TITLE_MAX: 80, // the optional headline stays short ("Great value")
+  COMMENT_MIN: 10, // forces a real sentence instead of "ok" or "👍"
+  COMMENT_MAX: 1000, // protects the database and the product page from essays
+  PAGE_SIZE: 5, // reviews shown per page on the product page
+  MAX_PAGE_SIZE: 20, // the most a client may ask for with ?limit=
+  ADMIN_PAGE_SIZE: 20, // admins moderate in bigger pages…
+  ADMIN_MAX_PAGE_SIZE: 100, // …but still never "everything at once"
+});

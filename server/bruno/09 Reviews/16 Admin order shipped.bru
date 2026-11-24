@@ -1,0 +1,28 @@
+meta {
+  name: Admin – move order to shipped
+  type: http
+  seq: 16
+}
+
+patch {
+  url: {{baseUrl}}/admin/orders/{{reviewOrderId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "status": "shipped",
+    "trackingNumber": "TRK-REVIEW-1"
+  }
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("order is shipped", function () { expect(rb.data.status).to.eql("shipped"); });
+}

@@ -1,0 +1,19 @@
+meta {
+  name: List product reviews (public)
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{baseUrl}}/products/{{reviewProductId}}/reviews?page=1&limit=5
+  body: none
+  auth: none
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("one review", function () { expect(rb.meta.total).to.eql(1); });
+  test("author name is shown", function () { expect(rb.data[0].user.name).to.eql("Review Tester"); });
+  test("author email is NOT shown", function () { expect(rb.data[0].user.email).to.eql(undefined); });
+}

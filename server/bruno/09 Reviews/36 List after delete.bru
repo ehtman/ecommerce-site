@@ -1,0 +1,17 @@
+meta {
+  name: List after delete is empty
+  type: http
+  seq: 36
+}
+
+get {
+  url: {{baseUrl}}/products/{{reviewProductId}}/reviews
+  body: none
+  auth: none
+}
+
+tests {
+  const rb = res.body; // rb = response body
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("no reviews", function () { expect(rb.meta.total).to.eql(0); });
+}
