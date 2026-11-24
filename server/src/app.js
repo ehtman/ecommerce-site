@@ -5,7 +5,7 @@
  * (Supertest) and Vercel can import the app without opening a network port.
  *
  * ORDER MATTERS. Every request flows through these lines from top to bottom:
- *   security headers → CORS → body parsing → sanitizing → logging → rate limit
+ *   security headers → CORS → [Stripe webhook, raw body] → body parsing → sanitizing → logging → rate limit
  *   → routes → 404 → error handler
  */
 import express from 'express';
@@ -32,6 +32,8 @@ import cartRoutes from './modules/cart/cart.routes.js';
 import wishlistRoutes from './modules/wishlist/wishlist.routes.js';
 import couponRoutes from './modules/coupons/coupon.routes.js';
 import orderRoutes, { adminOrderRoutes } from './modules/orders/order.routes.js';
+import paymentRoutes from './modules/payments/payment.routes.js';
+import { stripeWebhook } from './modules/payments/payment.controller.js';
 
 const app = express();
 
@@ -42,6 +44,15 @@ app.set('trust proxy', 1);
 // ---------- Global middleware ----------
 app.use(helmet()); // sets safe HTTP headers (e.g. stops our pages being put in iframes)
 app.use(cors({ origin: env.CLIENT_URLS })); // only our frontend(s) may call us from a browser
+
+// ---------- Stripe webhook (MUST come before express.json) ----------
+// Stripe signs the EXACT bytes it sends. express.json() would turn them into an object, and
+// re-serialising that object never gives back the identical bytes, so the signature check
+// would always fail. express.raw() keeps the body as a Buffer for this one route only.
+// It also sits before the rate limiter: Stripe's retries must never be blocked with 429.
+// (docs/concepts/22-webhooks-signatures-idempotency.md)
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+
 app.use(express.json({ limit: '100kb' })); // parse JSON bodies; refuse huge ones
 app.use(express.urlencoded({ extended: true, limit: '100kb' })); // parse HTML-form bodies
 // Removes keys starting with "$" or containing "." from input. That blocks NoSQL
@@ -62,6 +73,7 @@ app.get('/api/health', (_req, res) => {
       status: 'ok',
       environment: env.NODE_ENV,
       database: DB_STATES[mongoose.connection.readyState] || 'unknown',
+      cardPaymentsEnabled: env.PAYMENT_CARD_ENABLED, // lets the frontend hide the card option
     },
   });
 });
@@ -84,6 +96,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/orders', orderRoutes);
 // Branch 10 moves the admin order routes into /api/admin (admin.routes.js), same URLs
 app.use('/api/admin/orders', adminOrderRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // ---------- Fallbacks (must be LAST) ----------
 app.use(notFound); // no route matched → 404

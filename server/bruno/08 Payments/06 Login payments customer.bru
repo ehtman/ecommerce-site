@@ -1,0 +1,23 @@
+meta {
+  name: Login payments customer
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{paymentsEmail}}",
+    "password": "secret123"
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  bru.setEnvVar("paymentsToken", res.body.data.token);
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Expire unpaid customer token 403
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{baseUrl}}/payments/expire-unpaid
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{paymentsToken}}
+}
+
+tests {
+  test("status is 403 (a login token is not the cron secret)", function () { expect(res.status).to.equal(403); });
+}

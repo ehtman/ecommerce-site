@@ -1,0 +1,28 @@
+meta {
+  name: Register payments customer
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Payments Tester",
+    "email": "{{paymentsEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  // This folder creates its OWN customer, so it can run on its own
+  bru.setEnvVar("paymentsEmail", "bruno.pay" + Date.now() + "@example.com");
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+}

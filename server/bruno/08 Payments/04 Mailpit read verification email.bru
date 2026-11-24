@@ -1,0 +1,19 @@
+meta {
+  name: Mailpit read verification email
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{mailpitUrl}}/api/v1/message/{{paymentsMailId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("sent to our customer", function () { expect(res.body.To[0].Address).to.equal(bru.getEnvVar("paymentsEmail")); });
+  const match = (res.body.Text || '').match(/token=([a-f0-9]+)/);
+  test("email has a token link", function () { expect(match).to.not.equal(null); });
+  bru.setEnvVar("verifyToken", match[1]);
+}

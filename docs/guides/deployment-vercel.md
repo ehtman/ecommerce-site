@@ -21,6 +21,8 @@ The API runs on Vercel as a **serverless function**. `server/api/index.js` is th
    - `SMTP_*`, `EMAIL_FROM`: a real email provider (Mailpit is only for development)
    - `GOOGLE_CLIENT_ID` (optional), `ADMIN_*`
    - `RATE_LIMIT_ENABLED=true`
+   - `CRON_SECRET`: a long random string (Vercel Cron sends it as `Authorization: Bearer <CRON_SECRET>`)
+   - Card payments (optional): `PAYMENT_CARD_ENABLED=true`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (from the Stripe webhook endpoint, see [module 08](../modules/08-payments.md#deploying-vercel))
 5. Atlas → Network Access: allow `0.0.0.0/0` (Vercel's IPs change).
 6. Deploy.
 7. Once, from your computer, with production values in a temporary `.env`:
@@ -34,4 +36,4 @@ The API runs on Vercel as a **serverless function**. `server/api/index.js` is th
 ## Notes
 - Rate-limit counts are in memory, per serverless instance. That's fine for learning; production at scale would use Redis.
 - Google login: add the live frontend URL to the OAuth client's **Authorized JavaScript origins**.
-- Later branches add Stripe (webhook URL) and a cron job; their module docs explain the extra steps.
+- `vercel.json` also has a `crons` entry: Vercel calls `/api/payments/expire-unpaid` every day at 03:00 UTC to cancel unpaid card orders. Stripe needs the webhook URL `https://<your-api>/api/payments/webhook`. Details: [module 08](../modules/08-payments.md#deploying-vercel).

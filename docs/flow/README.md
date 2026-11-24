@@ -5,7 +5,7 @@ passes through: middleware, validation, controller, service, database, emails, e
 every error exit (`ApiError` → `errorHandler`) and the final response.
 
 Diagrams are Mermaid: GitHub and VS Code (with a Mermaid preview extension) draw them automatically.
-This index grows with every branch. It lists the flows that exist up to **07-orders**.
+This index grows with every branch. It lists the flows that exist up to **08-payments**.
 
 | Module | Endpoint / action | Flow |
 |---|---|---|
@@ -63,3 +63,6 @@ This index grows with every branch. It lists the flows that exist up to **07-ord
 | orders | PATCH /api/orders/:id/cancel | [cancel-order](orders/cancel-order.md) |
 | orders | GET /api/admin/orders | [admin-list-orders](orders/admin-list-orders.md) |
 | orders | PATCH /api/admin/orders/:id/status | [admin-update-order-status](orders/admin-update-order-status.md) |
+| payments | POST /api/payments/checkout-session | [create-checkout-session](payments/create-checkout-session.md) |
+| payments | POST /api/payments/webhook | [stripe-webhook](payments/stripe-webhook.md) |
+| payments | GET /api/payments/expire-unpaid, POST /api/payments/expire-unpaid | [expire-unpaid-orders](payments/expire-unpaid-orders.md) |
