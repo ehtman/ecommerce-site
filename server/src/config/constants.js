@@ -165,3 +165,35 @@ export const REVIEW = Object.freeze({
   ADMIN_PAGE_SIZE: 20, // admins moderate in bigger pages…
   ADMIN_MAX_PAGE_SIZE: 100, // …but still never "everything at once"
 });
+
+// ---------- Admin dashboard & reports (branch 10) ----------
+// All report numbers live here so the dashboard, the reports and the tests agree.
+export const ADMIN_REPORTS = Object.freeze({
+  // Dashboard ranges the admin can pick. `format` = how $dateToString names each chart point:
+  // short ranges get one point per DAY, the yearly range one point per MONTH (12, not 365).
+  DASHBOARD_RANGES: Object.freeze({
+    '7d': Object.freeze({ days: 7, format: '%Y-%m-%d' }),
+    '30d': Object.freeze({ days: 30, format: '%Y-%m-%d' }),
+    '12m': Object.freeze({ days: 365, format: '%Y-%m' }),
+  }),
+  DEFAULT_RANGE: '30d',
+  // Sales report buckets. %G-W%V = ISO week, e.g. "2026-W03" (weeks start on Monday).
+  GROUP_FORMATS: Object.freeze({ day: '%Y-%m-%d', week: '%G-W%V', month: '%Y-%m' }),
+  DEFAULT_GROUP_BY: 'day',
+  DEFAULT_REPORT_DAYS: 30, // no ?from → the last 30 days
+  MAX_REPORT_DAYS: 366, // one (leap) year: protects the database from "all of history" queries
+  // Time zone that decides which DAY an order belongs to. 'UTC' matches the reference
+  // server; pass ?tz=Asia/Karachi to see days the way a shop in Pakistan experiences them.
+  DEFAULT_TIMEZONE: 'UTC',
+  TOP_PRODUCTS_DASHBOARD: 5,
+  TOP_PRODUCTS_REPORT: 10,
+  RECENT_ORDERS: 5,
+  CUSTOMER_DETAIL_ORDERS: 50, // newest orders shown on one customer's page
+  LOW_STOCK_LIST_MAX: 100, // the low-stock list never returns more rows than this
+});
+
+// Page sizes for admin lists (?page & ?limit). MAX stops ?limit=1000000 from loading everything.
+export const PAGINATION = Object.freeze({
+  CUSTOMERS_DEFAULT_LIMIT: 20,
+  CUSTOMERS_MAX_LIMIT: 100,
+});

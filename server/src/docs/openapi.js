@@ -21,6 +21,7 @@ import couponDocs from '../modules/coupons/coupon.docs.js';
 import orderDocs from '../modules/orders/order.docs.js';
 import paymentDocs from '../modules/payments/payment.docs.js';
 import reviewDocs from '../modules/reviews/review.docs.js';
+import adminDocs from '../modules/admin/admin.docs.js';
 
 const spec = {
   openapi: '3.0.3',
@@ -232,6 +233,7 @@ const spec = {
     ...orderDocs.tags,
     ...paymentDocs.tags,
     ...reviewDocs.tags,
+    ...adminDocs.tags,
   ],
   paths: {
     '/health': {
@@ -253,6 +255,7 @@ const spec = {
     ...orderDocs.paths,
     ...paymentDocs.paths,
     ...reviewDocs.paths,
+    ...adminDocs.paths,
   },
 };
 

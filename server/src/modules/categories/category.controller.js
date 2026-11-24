@@ -20,6 +20,12 @@ export const getBySlug = asyncHandler(async (req, res) => {
   sendSuccess(res, 200, 'Category fetched', category);
 });
 
+// GET /api/admin/categories (admin, mounted by the admin module): every category, active
+// or not, with its productCount
+export const adminList = asyncHandler(async (_req, res) => {
+  sendSuccess(res, 200, 'Categories fetched', await categoryService.listAllWithCounts());
+});
+
 // POST /api/categories (admin) → 201 Created
 export const create = asyncHandler(async (req, res) => {
   const category = await categoryService.createCategory(req.body);

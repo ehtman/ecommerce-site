@@ -4,9 +4,10 @@
 |---|---|
 | **ACID** | Atomicity, Consistency, Isolation, Durability: the promises a transaction makes. See [20](20-transactions-and-race-conditions.md). |
 | **`$addToSet` / `$pull`** | MongoDB operators: add a value to an array only if missing / remove matching values. See [18](18-transactions-and-atomic-updates.md). |
-| **Aggregation pipeline** | A list of stages (`$match`, `$group`, `$sort`…) that MongoDB runs inside the database to calculate results instead of returning raw documents. See [23](23-ratings-aggregation-moderation.md). |
+| **Aggregation pipeline** | A list of stages (`$match`, `$group`, `$sort`…) that MongoDB runs inside the database to calculate results instead of returning raw documents. See [23](23-ratings-aggregation-moderation.md) and [24](24-reporting-aggregation-and-csv.md). |
 | **API** | A set of URLs a program can call to use our system. |
 | **ApiError** | Our Error class that carries an HTTP status code (`utils/ApiError.js`). |
+| **Async generator** | `async function*` that `yield`s values one at a time, consumed with `for await`. See [24](24-reporting-aggregation-and-csv.md). |
 | **asyncHandler** | Wrapper that sends errors from async controllers to the error handler. |
 | **Atlas** | MongoDB's hosted cloud database service. |
 | **At-least-once delivery** | A guarantee that a message arrives one or more times, so receivers must be idempotent. See [22](22-webhooks-signatures-idempotency.md). |
@@ -16,8 +17,10 @@
 | **Audit trail** | A history of who changed what, when and why (`statusHistory`). See [21](21-state-machines-and-snapshots.md). |
 | **Authentication (AuthN)** | Proving who you are (login). Fails with 401. |
 | **Authorization (AuthZ)** | Checking what you're allowed to do. Fails with 403. |
+| **Backpressure** | Pausing a producer when the consumer (network) is slower, via `write()` returning false and the `drain` event. See [24](24-reporting-aggregation-and-csv.md). |
 | **Bearer token** | A token sent as `Authorization: Bearer <token>`. Whoever holds ("bears") it gets access. |
 | **bcrypt** | A slow, salted password-hashing algorithm. |
+| **BOM** | Byte order mark at the start of a file so Excel reads it as UTF-8. See [24](24-reporting-aggregation-and-csv.md). |
 | **Brute force** | Guessing passwords by trying very many. Stopped by rate limits. |
 | **Bruno** | Open-source API client; collections are plain files in git. |
 | **CDN** | Content Delivery Network: copies of files on servers worldwide, served from the nearest one. See [17](17-file-uploads-and-cdn.md). |
@@ -37,6 +40,9 @@
 | **Coupon** | A code that gives a discount, e.g. `EID25`. Percentage or fixed amount, with rules for when and how often it works. See [19](19-coupons-money-math-and-atomic-counters.md). |
 | **Coverage** | How much of the code ran during tests. |
 | **Cron job** | A task a scheduler runs on a timetable (cron syntax like `0 3 * * *`). See [22](22-webhooks-signatures-idempotency.md). |
+| **CSV** | Comma-separated values: a plain-text table that spreadsheets open. See [24](24-reporting-aggregation-and-csv.md). |
+| **CSV / formula injection** | Text like `=HYPERLINK(…)` in an export that a spreadsheet runs as a formula; defused with a leading `'`. See [24](24-reporting-aggregation-and-csv.md). |
+| **Cursor** | A database pointer that returns query results in batches. See [24](24-reporting-aggregation-and-csv.md). |
 | **Denormalized counter** | A calculated copy of data stored for fast reads (e.g. `ratingAverage` on the product), kept in sync on every write. See [23](23-ratings-aggregation-moderation.md). |
 | **Document** | One record in MongoDB (JSON-like). |
 | **dotenv** | Library that loads `.env` into `process.env`. |
@@ -46,6 +52,7 @@
 | **Enumeration** | Finding out which accounts exist from different error messages. |
 | **Environment variable** | A setting given to a program from outside its code. |
 | **Express** | Minimal Node.js web framework. |
+| **`$facet`** | Runs several sub-pipelines on the same input in one query. See [24](24-reporting-aggregation-and-csv.md). |
 | **Factory (tests)** | Helper that creates test data (`createUser()`). |
 | **Fail fast** | Stop immediately with a clear error instead of failing later and confusingly. |
 | **Feature flag** | A setting that turns a feature on or off without changing code (`PAYMENT_CARD_ENABLED`). See [22](22-webhooks-signatures-idempotency.md). |
@@ -56,6 +63,7 @@
 | **Hosted checkout** | A payment page shown on the provider's own website, so the shop never handles card numbers. See [22](22-webhooks-signatures-idempotency.md). |
 | **HTTP** | The text protocol browsers and servers use to talk. |
 | **Husky** | Tool that runs scripts on git events (pre-commit). |
+| **IANA time zone** | A named zone such as `Asia/Karachi` that knows its offset and daylight-saving rules. See [24](24-reporting-aggregation-and-csv.md). |
 | **iat / exp** | JWT "issued at" / "expires at" times, in seconds. |
 | **Idempotency key** | A client-chosen unique key that lets the server recognise a repeated request. See [20](20-transactions-and-race-conditions.md). |
 | **Idempotent** | Running it twice has the same effect as running it once (`seed:admin`, `$addToSet`, `DELETE`). See [18](18-transactions-and-atomic-updates.md). |
@@ -64,14 +72,18 @@
 | **Index** | Database lookup structure that makes searches fast. |
 | **IDOR** | Insecure Direct Object Reference: reaching someone else's data just by changing an id in the URL. Prevented by ownership checks. |
 | **Integration test** | Tests several layers together (route → DB). |
+| **ISO week** | Week numbering (`2026-W02`) where weeks start on Monday and week 1 contains the year's first Thursday. See [24](24-reporting-aggregation-and-csv.md). |
 | **Jest** | JavaScript test runner. |
 | **JSON** | Text format for data: `{ "key": "value" }`. |
 | **JWT** | JSON Web Token: signed token carrying `id`, `role`, `v`. |
+| **Least privilege** | Give each user/route only the access it needs (one admin guard on the whole `/api/admin` router). See [24](24-reporting-aggregation-and-csv.md). |
 | **lint-staged** | Runs linters only on files staged for commit. |
 | **Load balancer** | Spreads requests across several server copies. |
+| **`$lookup`** | Joins documents from another collection (like a SQL `LEFT JOIN`). See [24](24-reporting-aggregation-and-csv.md). |
 | **Lost update** | Two read-modify-write cycles overlap and one write overwrites the other. See [19](19-coupons-money-math-and-atomic-counters.md). |
 | **Mailpit** | Fake email server with a web inbox for development. |
 | **Mass assignment** | Saving every field the client sent, including ones it shouldn't control. |
+| **`$match` / `$group`** | Filter documents / squash many documents into one row per key with `$sum`, `$avg`… See [24](24-reporting-aggregation-and-csv.md). |
 | **Middleware** | Function `(req, res, next)` that runs before the controller. |
 | **MIME type** | The declared content type of a file, e.g. `image/png` (a claim, not a proof). See [17](17-file-uploads-and-cdn.md). |
 | **Minor units** | The smallest unit of a currency (paisa, cents); payment APIs use whole numbers of them. See [22](22-webhooks-signatures-idempotency.md). |
@@ -81,6 +93,8 @@
 | **mongodb-memory-server** | Starts a real MongoDB in memory for tests. |
 | **Multer** | Express middleware that parses multipart bodies. See [17](17-file-uploads-and-cdn.md). |
 | **Multipart (`multipart/form-data`)** | The HTTP body format browsers use to send files. See [17](17-file-uploads-and-cdn.md). |
+| **N+1 queries** | Running one extra query per row of a list; avoided with one grouped query. See [24](24-reporting-aggregation-and-csv.md). |
+| **Natural key** | A real-world unique value (email, SKU, coupon code) used to find a record. See [24](24-reporting-aggregation-and-csv.md). |
 | **Newman** | Command-line runner for Postman collections. |
 | **NoSQL injection** | Sneaking query operators (`$ne`) into input to change a query. |
 | **ObjectId** | MongoDB's 12-byte unique id type, written as 24 hex characters. `validateObjectId` rejects anything else with 400. |
@@ -111,6 +125,7 @@
 | **Sanitize** | Clean input (trim, lowercase, strip `$` keys). |
 | **Schema** | Definition of a document's fields and rules. |
 | **Seed** | Script that inserts starting data (the admin user). |
+| **Seeding** | Inserting known starting data into a database (`npm run seed`). See [24](24-reporting-aggregation-and-csv.md). |
 | **Server-side price calculation** | The server reads prices from the database and computes totals; prices from the client are never trusted. See [18](18-transactions-and-atomic-updates.md). |
 | **SKU** | Stock Keeping Unit: the shop's own unique article number. See [16](16-catalog-queries.md). |
 | **Slug** | The readable, URL-friendly version of a name (`Men's Shoes` → `mens-shoes`). Generated by the server, unique per collection. |
@@ -123,6 +138,7 @@
 | **State machine** | Something that is always in exactly one state and may only move along a fixed list of transitions (an order's status). See [21](21-state-machines-and-snapshots.md). |
 | **Stateless** | Server keeps no per-client memory between requests. |
 | **Status code** | Number in a response saying how it went (200, 401…). |
+| **Streaming** | Sending a response piece by piece as it's produced, instead of building it all in memory. See [24](24-reporting-aggregation-and-csv.md). |
 | **Stub** | Fake replacement of a dependency in tests (fake Google verifier, fake Cloudinary client). |
 | **Supertest** | Library to send HTTP requests to an Express app in tests. |
 | **Swagger UI** | Web page that displays an OpenAPI spec and lets you try requests. |
@@ -133,6 +149,7 @@
 | **TTL** | Time To Live: how long something stays valid. |
 | **Unique index** | Index that refuses duplicate values. |
 | **Unit test** | Tests one small piece in isolation. |
+| **`$unwind`** | Turns one document with an array into one document per array element. See [24](24-reporting-aggregation-and-csv.md). |
 | **Upsert** | An update that inserts the document when nothing matches (`{ upsert: true }`). See [18](18-transactions-and-atomic-updates.md). |
 | **Validation** | Checking input is acceptable before using it. |
 | **Validity window** | The time between `startsAt` and `expiresAt` in which a coupon (or offer, or token) works. See [19](19-coupons-money-math-and-atomic-counters.md). |

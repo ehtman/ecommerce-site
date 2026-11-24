@@ -1,0 +1,20 @@
+meta {
+  name: Dashboard – range=12m (monthly chart)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/admin/dashboard/stats?range=12m&tz=Asia/Karachi
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("chart points are months (YYYY-MM)", function () { res.body.data.revenueSeries.forEach((p) => expect(p.date).to.match(/^\d{4}-\d{2}$/)); });
+}

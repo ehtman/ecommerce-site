@@ -28,7 +28,7 @@ The API runs on Vercel as a **serverless function**. `server/api/index.js` is th
 7. Once, from your computer, with production values in a temporary `.env`:
    ```bash
    npm run db:indexes     # build indexes (autoIndex is off in production)
-   npm run seed:admin     # create the admin
+   npm run seed           # admin + starter catalogue (or: npm run seed:admin for the admin only)
    ```
    Then remove the production secrets from your local `.env` again.
 8. Check `https://<your-api>.vercel.app/api/health` → `"database":"connected"`.

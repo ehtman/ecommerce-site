@@ -1,0 +1,19 @@
+meta {
+  name: Customers – limit too big → 400
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/admin/users?limit=101
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+}

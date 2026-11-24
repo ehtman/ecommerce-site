@@ -24,7 +24,7 @@ Express + MongoDB (Mongoose) API, written in JavaScript ES modules. Node 20+.
 ```bash
 npm install
 cp .env.example .env          # PowerShell: Copy-Item .env.example .env
-npm run seed:admin
+npm run seed                  # admin + categories, products, coupons (seed:admin = admin only)
 npm run dev                   # http://localhost:5000/api/health, /api/docs
 npm test                      # no database or Mailpit needed
 ```

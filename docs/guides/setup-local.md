@@ -60,7 +60,8 @@ Edit `server/.env`:
 ## 6. Create the admin and start
 
 ```bash
-npm run seed:admin      # ✔ Admin created: admin@shopease.pk
+npm run seed            # admin, categories, 30 products, coupons (safe to run twice)
+# npm run seed:admin    # (only the admin: ✔ Admin created: admin@shopease.pk)
 npm run dev             # ✔ MongoDB connected / ✔ API running on http://localhost:5000/api
 ```
 

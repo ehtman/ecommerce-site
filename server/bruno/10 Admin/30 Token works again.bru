@@ -1,0 +1,19 @@
+meta {
+  name: Status – the same token works again
+  type: http
+  seq: 30
+}
+
+get {
+  url: {{baseUrl}}/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admCustomerToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+}

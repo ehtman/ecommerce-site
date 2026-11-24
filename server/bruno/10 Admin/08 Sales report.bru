@@ -1,0 +1,22 @@
+meta {
+  name: Sales report – January 2026 by week, Pakistan time
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/admin/reports/sales?from=2026-01-01&to=2026-01-31&groupBy=week&tz=Asia/Karachi
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  const report = res.body.data;
+  test("local midnight of 1 Jan is 19:00 UTC on 31 Dec", function () { expect(report.from).to.equal("2025-12-31T19:00:00.000Z"); });
+  test("totals are the sum of the rows", function () { expect(report.totals.revenue).to.equal(report.rows.reduce((s, r) => s + r.revenue, 0)); });
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Sales report – from after to → 400
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/admin/reports/sales?from=2026-02-01&to=2026-01-01
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("clear message", function () { expect(res.body.message).to.equal("Start date must be before end date"); });
+}

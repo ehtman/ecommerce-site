@@ -26,7 +26,7 @@ Every step is a git **branch**. Each branch holds everything from the step befor
 | 07 | `07-orders` | Orders: MongoDB transactions, stock reservation, status flow | ✅ done |
 | 08 | `08-payments` | Stripe card payments + webhooks | ✅ done |
 | 09 | `09-reviews` | Product reviews (only after delivery) | ✅ done |
-| 10 | `10-admin` | Admin dashboard, reports, customer management | ⏳ planned |
+| 10 | `10-admin` | Admin dashboard, reports, customer management | ✅ done |
 | 11 | `11-client-foundation-auth` | React app foundation + auth pages | ⏳ planned |
 | 12 | `12-client-account` | Account pages (profile, addresses) | ⏳ planned |
 | 13 | `13-client-catalog` | Shop, categories, product pages | ⏳ planned |
@@ -62,8 +62,8 @@ npm install
 # 3) Create your .env and fill in MONGO_URI + JWT_SECRET
 cp .env.example .env                 # PowerShell: Copy-Item .env.example .env
 
-# 4) Create the admin account (uses ADMIN_* from .env)
-npm run seed:admin
+# 4) Seed the store: admin (ADMIN_* from .env), categories, 30 products, coupons
+npm run seed                         # only the admin: npm run seed:admin
 
 # 5) Start the API
 npm run dev                          # → http://localhost:5000/api/health
@@ -84,7 +84,8 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 |---|---|
 | `npm run dev` | Start the API with **nodemon** (restarts when you save a file) |
 | `npm start` | Start the API with plain node (production style) |
-| `npm run seed:admin` | Create the admin user from `ADMIN_*` in `.env` (safe to run twice) |
+| `npm run seed` | Seed the whole store: admin, 14 categories, 30 products, coupons WELCOME10/FLAT500 (safe to run twice) |
+| `npm run seed:admin` | Create only the admin user from `ADMIN_*` in `.env` (safe to run twice) |
 | `npm run db:indexes` | Make MongoDB indexes match the schemas (use in production) |
 | `npm test` | Run all Jest tests (unit + integration, in-memory DB) |
 | `npm run test:unit` | Only unit tests (`tests/unit`) |
@@ -128,6 +129,7 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 21. [State machines and snapshots](docs/concepts/21-state-machines-and-snapshots.md)
 22. [Webhooks, signatures and idempotency](docs/concepts/22-webhooks-signatures-idempotency.md)
 23. [Ratings: aggregation pipelines, denormalized counters, compound unique indexes, moderation](docs/concepts/23-ratings-aggregation-moderation.md)
+24. [Reporting: aggregation pipelines, time zones, CSV, admin lists and seeding](docs/concepts/24-reporting-aggregation-and-csv.md)
 - [Glossary](docs/concepts/glossary.md)
 
 **Mind maps** (how to think while building)
@@ -141,6 +143,7 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 - [07 – Orders](docs/mind-maps/07-orders.md)
 - [08 – Payments](docs/mind-maps/08-payments.md)
 - [09 – Reviews](docs/mind-maps/09-reviews.md)
+- [10 – Admin](docs/mind-maps/10-admin.md)
 
 **Modules**
 - [01 – Auth](docs/modules/01-auth.md)
@@ -152,6 +155,7 @@ Then open **http://localhost:5000/api/docs** to see and try every endpoint (Swag
 - [07 – Orders](docs/modules/07-orders.md)
 - [08 – Payments](docs/modules/08-payments.md)
 - [09 – Reviews](docs/modules/09-reviews.md)
+- [10 – Admin](docs/modules/10-admin.md)
 
 **Testing**
 - [Testing guide (Jest, Postman/Newman, Bruno)](docs/testing/README.md)

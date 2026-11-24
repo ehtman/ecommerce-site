@@ -5,7 +5,7 @@ passes through: middleware, validation, controller, service, database, emails, e
 every error exit (`ApiError` → `errorHandler`) and the final response.
 
 Diagrams are Mermaid: GitHub and VS Code (with a Mermaid preview extension) draw them automatically.
-This index grows with every branch. It lists the flows that exist up to **09-reviews**.
+This index grows with every branch. It lists the flows that exist up to **10-admin**.
 
 | Module | Endpoint / action | Flow |
 |---|---|---|
@@ -73,3 +73,24 @@ This index grows with every branch. It lists the flows that exist up to **09-rev
 | reviews | DELETE /api/reviews/:id | [delete-review](reviews/delete-review.md) |
 | reviews | GET /api/reviews/admin | [admin-list-reviews](reviews/admin-list-reviews.md) |
 | reviews | PATCH /api/reviews/:id/visibility | [set-review-visibility](reviews/set-review-visibility.md) |
+| admin | GET /api/admin/dashboard/stats | [dashboard-stats](admin/dashboard-stats.md) |
+| admin | GET /api/admin/reports/sales | [sales-report](admin/sales-report.md) |
+| admin | GET /api/admin/reports/sales/export | [export-sales-report-csv](admin/export-sales-report-csv.md) |
+| admin | GET /api/admin/reports/orders/export | [export-orders-csv](admin/export-orders-csv.md) |
+| admin | GET /api/admin/inventory | [inventory-overview](admin/inventory-overview.md) |
+| admin | GET /api/admin/products/low-stock | [low-stock-products](admin/low-stock-products.md) |
+| admin | GET /api/admin/users | [list-customers](admin/list-customers.md) |
+| admin | GET /api/admin/users/:id | [get-customer](admin/get-customer.md) |
+| admin | PATCH /api/admin/users/:id/status | [set-customer-status](admin/set-customer-status.md) |
+| admin | GET /api/admin/categories | [list-categories](admin/list-categories.md) |
+| admin | GET /api/admin/products | [list-products](admin/list-products.md) |
+| admin | GET /api/admin/products/:id | [get-product](admin/get-product.md) |
+| admin | GET /api/admin/orders | [list-orders](admin/list-orders.md) |
+| admin | PATCH /api/admin/orders/:id/status | [update-order-status](admin/update-order-status.md) |
+| admin | GET /api/admin/reviews | [list-reviews](admin/list-reviews.md) |
+| admin | PATCH /api/admin/reviews/:id/visibility | [set-review-visibility](admin/set-review-visibility.md) |
+| admin | GET /api/admin/coupons | [list-coupons](admin/list-coupons.md) |
+| admin | POST /api/admin/coupons | [create-coupon](admin/create-coupon.md) |
+| admin | PUT /api/admin/coupons/:id | [update-coupon](admin/update-coupon.md) |
+| admin | DELETE /api/admin/coupons/:id | [delete-coupon](admin/delete-coupon.md) |
+| db | npm run seed | [seed](db/seed.md) |

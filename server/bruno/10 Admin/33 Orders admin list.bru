@@ -1,0 +1,20 @@
+meta {
+  name: Orders – admin list
+  type: http
+  seq: 33
+}
+
+get {
+  url: {{baseUrl}}/admin/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("an array", function () { expect(res.body.data).to.be.an("array"); });
+}

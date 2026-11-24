@@ -1,0 +1,19 @@
+meta {
+  name: Low stock – negative threshold → 400
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/admin/products/low-stock?threshold=-1
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+}

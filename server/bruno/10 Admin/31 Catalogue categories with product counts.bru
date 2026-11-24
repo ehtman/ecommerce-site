@@ -1,0 +1,22 @@
+meta {
+  name: Catalogue – categories with product counts
+  type: http
+  seq: 31
+}
+
+get {
+  url: {{baseUrl}}/admin/categories
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  const d = res.body.data;
+  test("an array", function () { expect(d).to.be.an("array"); });
+  test("every row has a productCount", function () { d.forEach((c) => expect(c.productCount).to.be.a("number")); });
+}

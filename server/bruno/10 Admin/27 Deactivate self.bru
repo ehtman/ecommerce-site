@@ -1,0 +1,26 @@
+meta {
+  name: Status – deactivate yourself → 400
+  type: http
+  seq: 27
+}
+
+patch {
+  url: {{baseUrl}}/admin/users/{{adminId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "isActive": false
+  }
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("clear message", function () { expect(res.body.message).to.equal("You cannot change your own status"); });
+}

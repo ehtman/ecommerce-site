@@ -4,6 +4,33 @@ One entry per branch. Each entry says what the branch added or changed compared 
 
 ---
 
+## 10 – admin (`10-admin`)
+
+Ported from the reference app's `admin` module (+ the admin parts of users, and a full store seed), adapted to this repo's conventions. Final backend branch.
+
+### Added
+- `GET /api/admin/dashboard/stats?range=7d|30d|12m&tz=` – revenue (delivered), orders by status, customers, products, low stock, revenue chart, top products, recent orders.
+- `GET /api/admin/reports/sales?from&to&groupBy=day|week|month&tz=` – sales per period, per category, top products (one `$match` + `$facet`).
+- `GET /api/admin/reports/sales/export` – the sales report as a CSV download; `GET /api/admin/reports/orders/export?from&to&status&tz=` – every order as a **streamed** CSV (cursor + async generator, backpressure).
+- `GET /api/admin/inventory` – totals, stock value and per-category table; `GET /api/admin/products/low-stock?threshold=` (the only low-stock route).
+- `GET /api/admin/users` (search, status, pagination, order count, money spent), `GET /api/admin/users/:id`, `PATCH /api/admin/users/:id/status` (not yourself, not an admin; deactivated tokens get 403 at once).
+- The other modules' admin handlers under `/api/admin` (thin re-exports, the reference client's URLs): `GET /admin/categories` (with `productCount`), `GET /admin/products`, `GET /admin/products/:id`, `GET /admin/orders`, `PATCH /admin/orders/:id/status` (moved here from the orders module, same URL), `GET /admin/reviews`, `PATCH /admin/reviews/:id/visibility`, `GET/POST /admin/coupons`, `PUT/DELETE /admin/coupons/:id`.
+- `src/utils/dates.js` (time-zone-aware calendar days via `Intl`) and `src/utils/csv.js` (RFC 4180 + formula-injection guard); constants `ADMIN_REPORTS`, `PAGINATION`.
+- `npm run seed` – idempotent full store seed: admin, 14 categories, 30 products (Cloudinary demo images), coupons WELCOME10 and FLAT500. Docs now start with `npm run seed` (`seed:admin` still creates only the admin).
+- Tests: 108 new (1128 in total): `admin.test.js` (exact numbers on known data, UTC vs Asia/Karachi, CSV content, guards), `admin-aliases.test.js`, `reporting.test.js`, `seed.test.js` (seed twice = same counts).
+- Postman and Bruno folder **10 Admin** (needs `npm run seed`); OpenAPI tag **Admin**.
+- Docs: module guide 10, mind map 10, concept [24 – Reporting: aggregation pipelines, time zones, CSV, admin lists and seeding](docs/concepts/24-reporting-aggregation-and-csv.md).
+
+### Changed (compared with the reference)
+- Strict 400s for unknown `range`/`groupBy`/`limit`/`page`/`threshold`; optional `tz` (default `UTC` = reference numbers); `isActive` must be a real JSON boolean.
+- Sales report: one `$facet` instead of three queries; sales of deleted products kept as "Uncategorised".
+- Customer management lives in the admin module (same URLs and shapes); `GET /admin/users/:id` returns 404 for admins and adds `summary { orderCount, totalSpent }`.
+- Low stock is served by the admin module (adds `slug`, `price`, category name and `?threshold`); coupon CRUD and review moderation also stay on `/api/coupons` and `/api/reviews/admin`.
+- Seed: exported `seedStore()`, "exists → skip, else create" for every record; refuses to promote a customer whose email equals `ADMIN_EMAIL`.
+- New endpoints: the two CSV exports and `/admin/inventory`.
+
+---
+
 ## 09 – reviews (`09-reviews`)
 
 Ported from the reference app's `reviews` module, adapted to this repo's conventions.

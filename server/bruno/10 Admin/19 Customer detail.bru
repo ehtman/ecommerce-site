@@ -1,0 +1,20 @@
+meta {
+  name: Customer – detail
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{baseUrl}}/admin/users/{{admCustomerId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("no orders yet", function () { expect(res.body.data.orders.length).to.equal(0); expect(res.body.data.summary.orderCount).to.equal(0); });
+}

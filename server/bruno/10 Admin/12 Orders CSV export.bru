@@ -1,0 +1,21 @@
+meta {
+  name: Orders – CSV export (streamed)
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/admin/reports/orders/export?status=delivered
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("it is a CSV file", function () { expect(res.headers["content-type"]).to.equal("text/csv; charset=utf-8"); });
+  test("first line is the header", function () { expect(String(res.body).replace(/^\uFEFF/, "").split("\r\n")[0]).to.equal("orderNumber,date,customerName,customerEmail,status,paymentMethod,paymentStatus,items,itemsPrice,discountPrice,shippingPrice,totalPrice"); });
+}

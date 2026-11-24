@@ -1,11 +1,8 @@
 /**
- * src/modules/orders/order.routes.js – the URL maps of the orders module.
- *
- * Two routers live here:
- *   default export     → mounted in app.js under /api/orders        (customers, + admin read)
- *   adminOrderRoutes   → mounted in app.js under /api/admin/orders  (admins only)
- * Branch 10 (admin) collects every admin route in modules/admin/admin.routes.js and will
- * move the two admin order routes there; the URLs stay exactly the same.
+ * src/modules/orders/order.routes.js – the URL map of the orders module.
+ * Mounted in app.js under /api/orders (customers, + admin read of one order).
+ * The admin order routes (/api/admin/orders…) live in modules/admin/admin.routes.js since
+ * branch 10, which collects every /api/admin route; they reuse this module's controller.
  *
  * Pipeline of each route, left to right:
  *   protect (who are you?) → authorize (right role?) → requireVerifiedEmail (BR-12)
@@ -18,7 +15,7 @@ import { protect, authorize, requireVerifiedEmail } from '../../middleware/auth.
 import { validate, validateObjectId } from '../../middleware/validate.middleware.js';
 import { ROLES } from '../../config/constants.js';
 import * as c from './order.controller.js';
-import { placeOrderRules, cancelRules, statusRules, listRules } from './order.validation.js';
+import { placeOrderRules, cancelRules, listRules } from './order.validation.js';
 
 /* ---------- /api/orders ---------- */
 const router = Router();
@@ -36,14 +33,5 @@ router.patch('/:id/cancel', customer, validateObjectId('id'), validate(cancelRul
 
 export default router;
 
-/* ---------- /api/admin/orders (branch 10 moves these into admin.routes.js) ---------- */
-export const adminOrderRoutes = Router();
-adminOrderRoutes.use(protect, authorize(ROLES.ADMIN)); // admins only
-
-adminOrderRoutes.get('/', validate(listRules), c.adminList);
-adminOrderRoutes.patch(
-  '/:id/status',
-  validateObjectId('id'),
-  validate(statusRules),
-  c.adminUpdateStatus,
-);
+// The admin order routes (GET /api/admin/orders, PATCH /api/admin/orders/:id/status) are
+// mounted by the admin module (admin.routes.js) with c.adminList / c.adminUpdateStatus.
