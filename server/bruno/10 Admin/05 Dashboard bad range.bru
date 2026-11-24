@@ -1,0 +1,20 @@
+meta {
+  name: Dashboard – unknown range → 400
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/admin/dashboard/stats?range=1y
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+  test("the error names the field", function () { expect(res.body.errors[0].field).to.equal("range"); });
+}

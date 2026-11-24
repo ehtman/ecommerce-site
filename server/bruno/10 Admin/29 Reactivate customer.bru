@@ -1,0 +1,26 @@
+meta {
+  name: Status – reactivate the customer
+  type: http
+  seq: 29
+}
+
+patch {
+  url: {{baseUrl}}/admin/users/{{admCustomerId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:json {
+  {
+    "isActive": true
+  }
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("activated", function () { expect(res.body.data.isActive).to.equal(true); });
+}

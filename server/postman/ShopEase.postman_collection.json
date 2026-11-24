@@ -8056,6 +8056,960 @@
           }
         }
       ]
+    },
+    {
+      "name": "10 Admin",
+      "description": "Admin-only area. Self-contained: logs in the seeded admin (`npm run seed`), registers its own customer (for 403 checks and the activate/deactivate story), then checks the dashboard, sales report (+ CSV), streamed orders CSV, inventory, low stock and customer management. Assertions use invariants (totals = sum of rows) so they pass on any data set.",
+      "item": [
+        {
+          "name": "Admin login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200 (run npm run seed first)', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.environment.set('adminToken', res.data.token);",
+                  "pm.environment.set('adminId', res.data.user._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register – customer to manage",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Folder 10 creates its OWN customer: used for the 403 checks and the activate/deactivate story",
+                  "pm.environment.set('admCustomerEmail', 'postman.admin' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const res = pm.response.json();",
+                  "pm.environment.set('admCustomerToken', res.data.token);",
+                  "pm.environment.set('admCustomerId', res.data.user._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Managed Customer\",\n  \"email\": \"{{admCustomerEmail}}\",\n  \"password\": \"secret123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Dashboard – stats (default 30 days)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const stats = pm.response.json().data;",
+                  "pm.test('range defaults to 30d in UTC', () => { pm.expect(stats.range).to.eql('30d'); pm.expect(stats.timezone).to.eql('UTC'); });",
+                  "pm.test('orders by status add up to the total', () => pm.expect(stats.ordersByStatus.reduce((s, x) => s + x.count, 0)).to.eql(stats.totalOrders));",
+                  "pm.test('low stock is part of the active products', () => pm.expect(stats.lowStockCount).to.be.at.most(stats.totalProducts));",
+                  "pm.test('our new customer counts as new', () => pm.expect(stats.newCustomers).to.be.at.least(1));",
+                  "pm.test('at most 5 recent orders and top products', () => { pm.expect(stats.recentOrders.length).to.be.at.most(5); pm.expect(stats.topProducts.length).to.be.at.most(5); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/dashboard/stats"
+          }
+        },
+        {
+          "name": "Dashboard – range=12m (monthly chart)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const stats = pm.response.json().data;",
+                  "pm.test('12m in Pakistan time', () => { pm.expect(stats.range).to.eql('12m'); pm.expect(stats.timezone).to.eql('Asia/Karachi'); });",
+                  "pm.test('chart points are months (YYYY-MM)', () => stats.revenueSeries.forEach((p) => pm.expect(p.date).to.match(/^\\d{4}-\\d{2}$/)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/dashboard/stats?range=12m&tz=Asia/Karachi"
+          }
+        },
+        {
+          "name": "Dashboard – unknown range → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('the error names the field', () => pm.expect(pm.response.json().errors[0].field).to.eql('range'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/dashboard/stats?range=1y"
+          }
+        },
+        {
+          "name": "Dashboard – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403 (admins only)', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/dashboard/stats"
+          }
+        },
+        {
+          "name": "Dashboard – without token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/dashboard/stats"
+          }
+        },
+        {
+          "name": "Sales report – January 2026 by week, Pakistan time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const report = pm.response.json().data;",
+                  "pm.test('local midnight of 1 Jan is 19:00 UTC on 31 Dec', () => pm.expect(report.from).to.eql('2025-12-31T19:00:00.000Z'));",
+                  "pm.test('rows are ISO weeks', () => report.rows.forEach((r) => pm.expect(r.period).to.match(/^\\d{4}-W\\d{2}$/)));",
+                  "pm.test('totals are the sum of the rows', () => pm.expect(report.totals.revenue).to.eql(report.rows.reduce((s, r) => s + r.revenue, 0)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/sales?from=2026-01-01&to=2026-01-31&groupBy=week&tz=Asia/Karachi"
+          }
+        },
+        {
+          "name": "Sales report – from after to → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('clear message', () => pm.expect(pm.response.json().message).to.eql('Start date must be before end date'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/sales?from=2026-02-01&to=2026-01-01"
+          }
+        },
+        {
+          "name": "Sales report – impossible date → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('the error names the field', () => pm.expect(pm.response.json().errors[0].field).to.eql('from'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/sales?from=2026-02-30"
+          }
+        },
+        {
+          "name": "Sales report – CSV export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('it is a CSV file', () => pm.expect(pm.response.headers.get('Content-Type')).to.eql('text/csv; charset=utf-8'));",
+                  "pm.test('downloaded with a dated file name', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.eql('attachment; filename=\"sales-report_2026-01-01_2026-01-31.csv\"'));",
+                  "const lines = pm.response.text().replace(/^\\uFEFF/, '').split('\\r\\n');",
+                  "pm.test('header line then a TOTAL line', () => { pm.expect(lines[0]).to.eql('period,orders,itemsSold,revenue,averageOrderValue'); pm.expect(lines[lines.length - 2]).to.match(/^TOTAL,/); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/sales/export?from=2026-01-01&to=2026-01-31"
+          }
+        },
+        {
+          "name": "Orders – CSV export (streamed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('it is a CSV download', () => { pm.expect(pm.response.headers.get('Content-Type')).to.eql('text/csv; charset=utf-8'); pm.expect(pm.response.headers.get('Content-Disposition')).to.match(/^attachment; filename=\"orders_\\d{4}-\\d{2}-\\d{2}_\\d{4}-\\d{2}-\\d{2}\\.csv\"$/); });",
+                  "pm.test('first line is the header', () => pm.expect(pm.response.text().replace(/^\\uFEFF/, '').split('\\r\\n')[0]).to.eql('orderNumber,date,customerName,customerEmail,status,paymentMethod,paymentStatus,items,itemsPrice,discountPrice,shippingPrice,totalPrice'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/orders/export?status=delivered"
+          }
+        },
+        {
+          "name": "Orders export – unknown status → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400 (JSON error, no file)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/orders/export?status=lost"
+          }
+        },
+        {
+          "name": "Inventory – overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const inv = pm.response.json().data;",
+                  "pm.test('active + inactive = all products', () => pm.expect(inv.activeProducts + inv.inactiveProducts).to.eql(inv.totalProducts));",
+                  "pm.test('per-category units add up to the total', () => pm.expect(inv.byCategory.reduce((s, c) => s + c.units, 0)).to.eql(inv.totalUnits));",
+                  "pm.test('low-stock threshold is 5', () => pm.expect(inv.lowStockThreshold).to.eql(5));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/inventory"
+          }
+        },
+        {
+          "name": "Low stock – default threshold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const products = pm.response.json().data;",
+                  "pm.test('every product has stock ≤ 5', () => products.forEach((p) => pm.expect(p.stock).to.be.at.most(5)));",
+                  "pm.test('emptiest first', () => products.slice(1).forEach((p, i) => pm.expect(p.stock).to.be.at.least(products[i].stock)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/products/low-stock"
+          }
+        },
+        {
+          "name": "Low stock – negative threshold → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/products/low-stock?threshold=-1"
+          }
+        },
+        {
+          "name": "Customers – search our customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('exactly our customer, active, no orders yet', () => { pm.expect(res.data).to.have.length(1); pm.expect(res.data[0]).to.include({ _id: pm.environment.get('admCustomerId'), isActive: true, orderCount: 0, totalSpent: 0 }); });",
+                  "pm.test('pagination meta', () => pm.expect(res.meta).to.include({ page: 1, limit: 20, total: 1 }));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users?search={{admCustomerEmail}}"
+          }
+        },
+        {
+          "name": "Customers – limit too big → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users?limit=101"
+          }
+        },
+        {
+          "name": "Customer – detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const detail = pm.response.json().data;",
+                  "pm.test('profile without secrets', () => { pm.expect(detail.user.email).to.eql(pm.environment.get('admCustomerEmail')); pm.expect(detail.user).to.not.have.property('password'); });",
+                  "pm.test('no orders yet', () => { pm.expect(detail.orders).to.eql([]); pm.expect(detail.summary).to.eql({ orderCount: 0, totalSpent: 0 }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{admCustomerId}}"
+          }
+        },
+        {
+          "name": "Customer – an admin id → 404 (customers only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{adminId}}"
+          }
+        },
+        {
+          "name": "Customer – unknown id → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/665f1c2e9b1e8a0012345678"
+          }
+        },
+        {
+          "name": "Customer – malformed id → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/not-an-id"
+          }
+        },
+        {
+          "name": "Customer – customer calls admin users → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users"
+          }
+        },
+        {
+          "name": "Status – deactivate the customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const res = pm.response.json();",
+                  "pm.test('deactivated', () => { pm.expect(res.message).to.eql('Customer deactivated'); pm.expect(res.data.isActive).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{admCustomerId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Status – deactivated customer's token → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Account disabled', () => pm.expect(pm.response.json().message).to.eql('Account disabled'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Customers – inactive filter finds them",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('listed as inactive', () => { const list = pm.response.json().data; pm.expect(list).to.have.length(1); pm.expect(list[0].isActive).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users?status=inactive&search={{admCustomerEmail}}"
+          }
+        },
+        {
+          "name": "Status – deactivate yourself → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('clear message', () => pm.expect(pm.response.json().message).to.eql('You cannot change your own status'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{adminId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Status – isActive as text → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('the error names the field', () => pm.expect(pm.response.json().errors[0].field).to.eql('isActive'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{admCustomerId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": \"true\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Status – reactivate the customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('activated', () => pm.expect(pm.response.json().message).to.eql('Customer activated'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/users/{{admCustomerId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Status – the same token works again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Catalogue – categories with product counts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().data;",
+                  "pm.test('an array', () => pm.expect(d).to.be.an('array'));",
+                  "pm.test('every row has a productCount', () => d.forEach((c) => pm.expect(c.productCount).to.be.a('number')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/categories"
+          }
+        },
+        {
+          "name": "Catalogue – products (inactive too, paged)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('limit 5 respected', () => pm.expect(j.data.length).to.be.at.most(5));",
+                  "pm.test('meta.limit is 5', () => pm.expect(j.meta.limit).to.eql(5));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/products?limit=5"
+          }
+        },
+        {
+          "name": "Orders – admin list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/orders"
+          }
+        },
+        {
+          "name": "Reviews – moderation list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reviews"
+          }
+        },
+        {
+          "name": "Coupons – admin list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/coupons"
+          }
+        },
+        {
+          "name": "Coupons – customer → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('status is 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admCustomerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/coupons"
+          }
+        }
+      ]
     }
   ]
 }

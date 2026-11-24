@@ -1,0 +1,19 @@
+meta {
+  name: Customer – an admin id → 404 (customers only)
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrl}}/admin/users/{{adminId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 404", function () { expect(res.status).to.equal(404); });
+}

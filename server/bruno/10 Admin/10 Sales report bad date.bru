@@ -1,0 +1,19 @@
+meta {
+  name: Sales report – impossible date → 400
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/admin/reports/sales?from=2026-02-30
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400", function () { expect(res.status).to.equal(400); });
+}

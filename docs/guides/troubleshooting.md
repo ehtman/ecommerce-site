@@ -11,7 +11,7 @@
 | `failed to connect to the docker API … dockerDesktopLinuxEngine` | Docker Desktop isn't started | Start Docker Desktop, wait for "Engine running", retry |
 | Postman/Newman: many `429 Too Many Requests` | Rate limits (10 auth tries / 15 min per IP) | Set `RATE_LIMIT_ENABLED=false` in `.env` and restart the API, or wait 15 min |
 | Postman "Mailpit – read … email" fails | Mailpit down, or `mailpitUrl` wrong | Start Mailpit; environment `mailpitUrl = http://localhost:8025` |
-| Postman "Admin login" fails with 401 | Admin not seeded, or different credentials | `npm run seed:admin`; match `adminEmail`/`adminPassword` with `.env` |
+| Postman "Admin login" fails with 401 | Admin not seeded, or different credentials | `npm run seed` (or `npm run seed:admin`); match `adminEmail`/`adminPassword` with `.env` |
 | `npm warn install-scripts … not yet covered by allowScripts` | npm 11 blocks install scripts by default | Safe to ignore for `@parcel/watcher` and `@scarf/scarf`. `bcrypt` and `mongodb-memory-server` are approved in `package.json` |
 | `Cannot find module …bcrypt…` / bcrypt binding errors | bcrypt's install step was blocked or Node changed versions | `npm rebuild bcrypt`, or delete `node_modules` and `npm install` |
 | First `npm test` is slow or seems stuck | mongodb-memory-server downloads MongoDB (~100 MB) once | Wait. Later runs are fast. Behind a proxy, set `HTTPS_PROXY` |

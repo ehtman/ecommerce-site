@@ -1,0 +1,30 @@
+meta {
+  name: Register – customer to manage
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Managed Customer",
+    "email": "{{admCustomerEmail}}",
+    "password": "secret123"
+  }
+}
+
+script:pre-request {
+  // Folder 10 creates its OWN customer: used for the 403 checks and the activate/deactivate story
+  bru.setEnvVar("admCustomerEmail", "bruno.admin" + Date.now() + "@example.com");
+}
+
+tests {
+  test("status is 201", function () { expect(res.status).to.equal(201); });
+  bru.setEnvVar("admCustomerToken", res.body.data.token);
+  bru.setEnvVar("admCustomerId", res.body.data.user._id);
+}

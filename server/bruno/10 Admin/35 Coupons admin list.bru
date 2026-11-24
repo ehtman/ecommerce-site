@@ -1,0 +1,20 @@
+meta {
+  name: Coupons – admin list
+  type: http
+  seq: 35
+}
+
+get {
+  url: {{baseUrl}}/admin/coupons
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  test("an array", function () { expect(res.body.data).to.be.an("array"); });
+}

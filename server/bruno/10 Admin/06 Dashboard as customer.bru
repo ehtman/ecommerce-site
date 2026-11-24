@@ -1,0 +1,19 @@
+meta {
+  name: Dashboard – customer → 403
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/admin/dashboard/stats
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{admCustomerToken}}
+}
+
+tests {
+  test("status is 403 (admins only)", function () { expect(res.status).to.equal(403); });
+}

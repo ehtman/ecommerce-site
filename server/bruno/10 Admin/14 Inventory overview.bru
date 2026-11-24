@@ -1,0 +1,22 @@
+meta {
+  name: Inventory – overview
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/admin/inventory
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  const inv = res.body.data;
+  test("active + inactive = all products", function () { expect(inv.activeProducts + inv.inactiveProducts).to.equal(inv.totalProducts); });
+  test("per-category units add up to the total", function () { expect(inv.byCategory.reduce((s, c) => s + c.units, 0)).to.equal(inv.totalUnits); });
+}

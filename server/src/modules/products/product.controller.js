@@ -29,8 +29,10 @@ export const brands = asyncHandler(async (_req, res) => {
 });
 
 /* ---------- Admin ---------- */
-// The next three are mounted by the admin module (branch 10) at /api/admin/products…,
-// exactly like the reference app. They live here because they are about products.
+// adminList and adminGet are mounted by the admin module at /api/admin/products and
+// /api/admin/products/:id, exactly like the reference app. They live here because they are
+// about products. lowStock is NOT mounted: the admin module's own low-stock handler (with
+// ?threshold) serves /api/admin/products/low-stock, so there is exactly one such route.
 
 // GET /api/admin/products (branch 10)
 export const adminList = asyncHandler(async (req, res) => {
@@ -38,7 +40,7 @@ export const adminList = asyncHandler(async (req, res) => {
   sendSuccess(res, 200, 'Products fetched', data, meta);
 });
 
-// GET /api/admin/products/low-stock (branch 10)
+// Low-stock list (kept for its tests; the URL is served by admin.controller.lowStock)
 export const lowStock = asyncHandler(async (_req, res) => {
   sendSuccess(res, 200, 'Low-stock products fetched', await productService.lowStock());
 });

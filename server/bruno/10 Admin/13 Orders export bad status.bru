@@ -1,0 +1,19 @@
+meta {
+  name: Orders export – unknown status → 400
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/admin/reports/orders/export?status=lost
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 400 (JSON error, no file)", function () { expect(res.status).to.equal(400); });
+}

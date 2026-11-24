@@ -27,6 +27,7 @@ Build order when writing a new module: **model → validation → service → co
 | [`orders/`](orders/README.md)         | Checkout in one transaction, order history, cancel, admin status machine                            |
 | [`payments/`](payments/README.md)     | Card payments with Stripe: hosted checkout, signed webhook, expiry cron job                         |
 | [`reviews/`](reviews/README.md)       | Product reviews: delivered buyers only, one per product, ★ average on the product, admin moderation |
+| [`admin/`](admin/README.md)           | Admin only: dashboard, sales reports + CSV exports, inventory, customer management                  |
 | `models.js`                           | Re-exports every model: `import { User } from '../models.js'`                                       |
 
 Each new branch adds a folder here, one line in `models.js` (if it has a model) and one line in `app.js`.

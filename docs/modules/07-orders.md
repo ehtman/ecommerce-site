@@ -28,7 +28,7 @@ All paths start with `/api`. Every route needs `Authorization: Bearer <token>`.
 - **404**: the order (or the address) doesn't exist **or belongs to someone else**. Same answer on purpose (no IDOR, see [concept 14](../concepts/14-authorization-ownership.md)).
 - **409 on POST /orders**: some cart lines can't be sold (out of stock, inactive/deleted product, more than 10). `errors` lists each line: `{ product, name, reason, available? }`. Nothing was changed.
 - **400 on POST /orders**: validation, empty cart, coupon not found/expired/inactive/used up/under the minimum, or `CARD` while card payments are off.
-- `/admin/orders/*` live in `order.routes.js` for now (`adminOrderRoutes`). Branch 10 moves them into `admin.routes.js`; the URLs don't change.
+- `/admin/orders/*` lived in `order.routes.js` (`adminOrderRoutes`) in this branch; branch 10 moved them into `admin.routes.js` with the same URLs and handlers.
 
 Place-order body:
 
@@ -189,7 +189,7 @@ The status is re-checked **inside** the transaction. Two cancel requests at once
 | `modules/orders/order.validation.js`             | `placeOrderRules`, `cancelRules`, `statusRules`, `listRules`                                                                                              |
 | `modules/orders/order.service.js`                | `placeOrder` (transaction), `getMyOrders`, `getOrderById`, `cancelWithRestore`, `cancelMyOrder`, `adminListOrders`, `adminUpdateStatus`, `sendOrderEmail` |
 | `modules/orders/order.controller.js`             | Thin handlers                                                                                                                                             |
-| `modules/orders/order.routes.js`                 | Customer router (default) + `adminOrderRoutes`                                                                                                            |
+| `modules/orders/order.routes.js`                 | Customer router (+ `adminOrderRoutes` until branch 10)                                                                                                    |
 | `modules/orders/order.docs.js`                   | OpenAPI paths, tags and the `Order*` schemas                                                                                                              |
 | `emails/templates.js`                            | **new** `orderConfirmationTemplate`, `orderStatusTemplate` (escaped)                                                                                      |
 | `modules/models.js`, `app.js`, `docs/openapi.js` | One or two lines each to plug the module in                                                                                                               |

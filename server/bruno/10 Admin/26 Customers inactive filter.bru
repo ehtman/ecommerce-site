@@ -1,0 +1,19 @@
+meta {
+  name: Customers – inactive filter finds them
+  type: http
+  seq: 26
+}
+
+get {
+  url: {{baseUrl}}/admin/users?status=inactive&search={{admCustomerEmail}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("listed as inactive", function () { expect(res.body.data.length).to.equal(1); expect(res.body.data[0].isActive).to.equal(false); });
+}

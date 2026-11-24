@@ -1,0 +1,24 @@
+meta {
+  name: Dashboard – stats (default 30 days)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/admin/dashboard/stats
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("status is 200", function () { expect(res.status).to.equal(200); });
+  const stats = res.body.data;
+  test("range defaults to 30d in UTC", function () { expect(stats.range).to.equal("30d"); expect(stats.timezone).to.equal("UTC"); });
+  test("orders by status add up to the total", function () { expect(stats.ordersByStatus.reduce((s, x) => s + x.count, 0)).to.equal(stats.totalOrders); });
+  test("low stock is part of the active products", function () { expect(stats.lowStockCount).to.be.at.most(stats.totalProducts); });
+  test("our new customer counts as new", function () { expect(stats.newCustomers).to.be.at.least(1); });
+}
